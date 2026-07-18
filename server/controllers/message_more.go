@@ -23,7 +23,10 @@ import (
 // @Param        instance  path      string                  true  "Instance ID"
 // @Param        body      body      dto.SendDocumentRequest  true  "Video parameters"
 // @Success      200       {object}  dto.SendDocumentResponse
-// @Router       /instance/{instance}/message/video [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/message/video [post]
 func (s *Message) SendVideo(ctx echo.Context) error {
 	var request dto.SendDocumentRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -85,7 +88,10 @@ func (s *Message) sendVideo(ctx echo.Context, request dto.SendDocumentRequest, g
 // @Param        instance  path      string             true  "Instance ID"
 // @Param        body      body      dto.SendPtvRequest  true  "PTV parameters"
 // @Success      200       {object}  dto.SendPtvResponse
-// @Router       /message/sendPtv/{instance} [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/message/sendPtv/{instance} [post]
 func (s *Message) SendPtv(ctx echo.Context) error {
 	var request dto.SendPtvRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -146,7 +152,11 @@ func (s *Message) SendPtv(ctx echo.Context) error {
 // @Param        instance  path      string                 true  "Instance ID"
 // @Param        body      body      dto.SendStickerRequest  true  "Sticker parameters"
 // @Success      200       {object}  dto.SendStickerResponse
-// @Router       /message/sendSticker/{instance} [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/message/sticker [post]
+// @Router       /v1/message/sendSticker/{instance} [post]
 func (s *Message) SendSticker(ctx echo.Context) error {
 	var request dto.SendStickerRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -199,7 +209,11 @@ func (s *Message) SendSticker(ctx echo.Context) error {
 // @Param        instance  path      string                  true  "Instance ID"
 // @Param        body      body      dto.SendLocationRequest  true  "Location parameters"
 // @Success      200       {object}  dto.SendLocationResponse
-// @Router       /message/sendLocation/{instance} [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/message/location [post]
+// @Router       /v1/message/sendLocation/{instance} [post]
 func (s *Message) SendLocation(ctx echo.Context) error {
 	var request dto.SendLocationRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -255,7 +269,11 @@ func (s *Message) SendLocation(ctx echo.Context) error {
 // @Param        instance  path      string                 true  "Instance ID"
 // @Param        body      body      dto.SendContactRequest  true  "Contact parameters"
 // @Success      200       {object}  dto.SendContactResponse
-// @Router       /message/sendContact/{instance} [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/message/contact [post]
+// @Router       /v1/message/sendContact/{instance} [post]
 func (s *Message) SendContact(ctx echo.Context) error {
 	var request dto.SendContactRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -325,7 +343,11 @@ func (s *Message) SendContact(ctx echo.Context) error {
 // @Param        instance  path      string              true  "Instance ID"
 // @Param        body      body      dto.SendPollRequest  true  "Poll parameters"
 // @Success      200       {object}  dto.SendPollResponse
-// @Router       /message/sendPoll/{instance} [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/message/poll [post]
+// @Router       /v1/message/sendPoll/{instance} [post]
 func (s *Message) SendPoll(ctx echo.Context) error {
 	var request dto.SendPollRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -380,7 +402,11 @@ func (s *Message) SendPoll(ctx echo.Context) error {
 // @Param        instance  path      string                true  "Instance ID"
 // @Param        body      body      dto.SendStatusRequest  true  "Status parameters"
 // @Success      200       {object}  dto.SendStatusResponse
-// @Router       /message/sendStatus/{instance} [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/message/status [post]
+// @Router       /v1/message/sendStatus/{instance} [post]
 func (s *Message) SendStatus(ctx echo.Context) error {
 	var request dto.SendStatusRequest
 	if err := ctx.Bind(&request); err != nil {

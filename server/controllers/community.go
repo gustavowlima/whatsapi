@@ -33,7 +33,14 @@ func NewCommunities(repository interfaces.InstanceRepository, whatsmiau *whatsmi
 // @Param        instance  path  string                   true  "Instance ID"
 // @Param        body      body  dto.CreateCommunityRequest true  "Community payload"
 // @Success      201       {object}  whatsmiau.GroupInfoResponse
-// @Router       /instance/{instance}/community/create [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/create [post]
 func (s *Community) CreateCommunity(ctx echo.Context) error {
 	var request dto.CreateCommunityRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -65,7 +72,14 @@ func (s *Community) CreateCommunity(ctx echo.Context) error {
 // @Param        instance  path  string                            true  "Instance ID"
 // @Param        body      body  dto.CreateCommunitySubGroupRequest true  "Sub group payload"
 // @Success      201       {object}  whatsmiau.GroupInfoResponse
-// @Router       /instance/{instance}/community/createSubGroup [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/createSubGroup [post]
 func (s *Community) CreateSubGroup(ctx echo.Context) error {
 	var request dto.CreateCommunitySubGroupRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -102,7 +116,14 @@ func (s *Community) CreateSubGroup(ctx echo.Context) error {
 // @Param        instance  path  string                       true  "Instance ID"
 // @Param        body      body  dto.CommunityLinkGroupRequest true  "Link payload"
 // @Success      200       {object}  map[string]interface{}
-// @Router       /instance/{instance}/community/linkGroup [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/linkGroup [post]
 func (s *Community) LinkGroup(ctx echo.Context) error {
 	var request dto.CommunityLinkGroupRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -141,7 +162,14 @@ func (s *Community) LinkGroup(ctx echo.Context) error {
 // @Param        instance  path  string                       true  "Instance ID"
 // @Param        body      body  dto.CommunityLinkGroupRequest true  "Unlink payload"
 // @Success      200       {object}  map[string]interface{}
-// @Router       /instance/{instance}/community/unlinkGroup [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/unlinkGroup [post]
 func (s *Community) UnlinkGroup(ctx echo.Context) error {
 	var request dto.CommunityLinkGroupRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -179,7 +207,14 @@ func (s *Community) UnlinkGroup(ctx echo.Context) error {
 // @Param        instance      path  string true  "Instance ID"
 // @Param        communityJid  query string true  "Community JID"
 // @Success      200  {array}  whatsmiau.SubGroupResponse
-// @Router       /instance/{instance}/community/subGroups [get]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/subGroups [get]
 func (s *Community) SubGroups(ctx echo.Context) error {
 	var request dto.CommunityJidQuery
 	if err := ctx.Bind(&request); err != nil {
@@ -213,7 +248,14 @@ func (s *Community) SubGroups(ctx echo.Context) error {
 // @Param        instance      path  string true  "Instance ID"
 // @Param        communityJid  query string true  "Community JID"
 // @Success      200  {array}  whatsmiau.LinkedParticipantResponse
-// @Router       /instance/{instance}/community/linkedGroupsParticipants [get]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/linkedGroupsParticipants [get]
 func (s *Community) LinkedGroupsParticipants(ctx echo.Context) error {
 	var request dto.CommunityJidQuery
 	if err := ctx.Bind(&request); err != nil {
@@ -248,7 +290,14 @@ func (s *Community) LinkedGroupsParticipants(ctx echo.Context) error {
 // @Param        instance  path  string                                 true  "Instance ID"
 // @Param        body      body  dto.CommunitySetJoinApprovalModeRequest true  "Mode payload"
 // @Success      201       {object}  map[string]interface{}
-// @Router       /instance/{instance}/community/setJoinApprovalMode [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/setJoinApprovalMode [post]
 func (s *Community) SetJoinApprovalMode(ctx echo.Context) error {
 	var request dto.CommunitySetJoinApprovalModeRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -283,7 +332,14 @@ func (s *Community) SetJoinApprovalMode(ctx echo.Context) error {
 // @Param        instance  path  string                              true  "Instance ID"
 // @Param        body      body  dto.CommunitySetMemberAddModeRequest true  "Mode payload"
 // @Success      201       {object}  map[string]interface{}
-// @Router       /instance/{instance}/community/setMemberAddMode [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/setMemberAddMode [post]
 func (s *Community) SetMemberAddMode(ctx echo.Context) error {
 	var request dto.CommunitySetMemberAddModeRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -317,7 +373,14 @@ func (s *Community) SetMemberAddMode(ctx echo.Context) error {
 // @Param        instance      path  string true  "Instance ID"
 // @Param        communityJid  query string true  "Community JID"
 // @Success      200  {array}  whatsmiau.RequestParticipantResponse
-// @Router       /instance/{instance}/community/requestParticipants [get]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/requestParticipants [get]
 func (s *Community) RequestParticipants(ctx echo.Context) error {
 	var request dto.CommunityJidQuery
 	if err := ctx.Bind(&request); err != nil {
@@ -352,7 +415,14 @@ func (s *Community) RequestParticipants(ctx echo.Context) error {
 // @Param        instance  path  string                                          true  "Instance ID"
 // @Param        body      body  dto.CommunityUpdateRequestParticipantsRequest true  "Update payload"
 // @Success      201       {object}  whatsmiau.UpdateParticipantResponse
-// @Router       /instance/{instance}/community/requestParticipants/update [post]
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/community/requestParticipants/update [post]
 func (s *Community) UpdateRequestParticipants(ctx echo.Context) error {
 	var request dto.CommunityUpdateRequestParticipantsRequest
 	if err := ctx.Bind(&request); err != nil {
