@@ -62,7 +62,7 @@ func (s *Whatsmiau) storeClient(id string, client *whatsmeow.Client) {
 
 func (s *Whatsmiau) deleteClient(id string) {
 	s.removeCallClient(id)
-	s.deleteClient(id)
+	s.clients.Delete(id)
 }
 
 func LoadMiau(ctx context.Context, container *sqlstore.Container) {
