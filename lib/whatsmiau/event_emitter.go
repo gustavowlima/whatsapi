@@ -212,15 +212,17 @@ func (s *Whatsmiau) Handle(id string) whatsmeow.EventHandler {
 				s.handleLoggedOut(id)
 				return
 			}
+			if env.Env.CallDebug {
+				if offer, ok := evt.(*events.CallOffer); ok {
+					s.debugCallOfferShape(id, offer.Data)
+				}
+			}
 
 			if instance.Webhook.Enabled != nil && !*instance.Webhook.Enabled {
 				return
 			}
 
-			eventMap := make(map[string]bool)
-			for _, event := range instance.Webhook.Events {
-				eventMap[event] = true
-			}
+			eventMap := webhookEventMap(instance.Webhook.Events)
 
 			switch e := evt.(type) {
 			case *events.Message:
@@ -242,6 +244,22 @@ func (s *Whatsmiau) Handle(id string) whatsmeow.EventHandler {
 				s.handleJoinedGroupEvent(id, instance, e, eventMap)
 			case *events.PushName:
 				s.handlePushNameEvent(id, instance, e, eventMap)
+			case *events.CallOffer:
+				s.handleCallOfferEvent(id, instance, e, eventMap)
+			case *events.CallOfferNotice:
+				s.handleCallOfferNoticeEvent(id, instance, e, eventMap)
+			case *events.CallPreAccept:
+				s.handleCallPreAcceptEvent(id, instance, e, eventMap)
+			case *events.CallAccept:
+				s.handleCallAcceptEvent(id, instance, e, eventMap)
+			case *events.CallTransport:
+				s.handleCallTransportEvent(id, instance, e, eventMap)
+			case *events.CallRelayLatency:
+				s.handleCallRelayLatencyEvent(id, instance, e, eventMap)
+			case *events.CallReject:
+				s.handleCallRejectEvent(id, instance, e, eventMap)
+			case *events.CallTerminate:
+				s.handleCallTerminateEvent(id, instance, e, eventMap)
 			case *events.Connected:
 				s.handleConnectionUpdateEvent(id, instance, "open", 200, eventMap)
 			case *events.Disconnected:
@@ -259,6 +277,17 @@ func (s *Whatsmiau) Handle(id string) whatsmeow.EventHandler {
 	}
 }
 
+func webhookEventMap(events []string) map[string]bool {
+	eventMap := make(map[string]bool, len(events))
+	for _, event := range events {
+		normalized := strings.NewReplacer(".", "_", "-", "_").Replace(strings.ToUpper(strings.TrimSpace(event)))
+		if normalized != "" {
+			eventMap[normalized] = true
+		}
+	}
+	return eventMap
+}
+
 func (s *Whatsmiau) handleLoggedOut(id string) {
 	s.stopHistorySyncWatchdog(id)
 
@@ -270,7 +299,7 @@ func (s *Whatsmiau) handleLoggedOut(id string) {
 		}
 	}
 
-	s.clients.Delete(id)
+	s.deleteClient(id)
 }
 func (s *Whatsmiau) handleMessageEvent(id string, instance *models.Instance, e *events.Message, eventMap map[string]bool) {
 	if e.Message != nil {

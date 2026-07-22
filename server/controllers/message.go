@@ -44,8 +44,8 @@ var emojiRegex = regexp.MustCompile(`[\x{1F000}-\x{1FFFF}]|[\x{2300}-\x{23FF}]|[
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /instance/{instance}/message/text [post]
-// @Router       /message/sendText/{instance} [post]
+// @Router       /v1/instance/{instance}/message/text [post]
+// @Router       /v1/message/sendText/{instance} [post]
 func (s *Message) SendText(ctx echo.Context) error {
 	var request dto.SendTextRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -119,8 +119,8 @@ func (s *Message) SendText(ctx echo.Context) error {
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /instance/{instance}/message/audio [post]
-// @Router       /message/sendWhatsAppAudio/{instance} [post]
+// @Router       /v1/instance/{instance}/message/audio [post]
+// @Router       /v1/message/sendWhatsAppAudio/{instance} [post]
 func (s *Message) SendAudio(ctx echo.Context) error {
 	var request dto.SendAudioRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -193,7 +193,7 @@ func (s *Message) SendAudio(ctx echo.Context) error {
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /message/sendMedia/{instance} [post]
+// @Router       /v1/message/sendMedia/{instance} [post]
 func (s *Message) SendMedia(ctx echo.Context) error {
 	var request dto.SendMediaRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -227,7 +227,7 @@ func (s *Message) SendMedia(ctx echo.Context) error {
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /instance/{instance}/message/document [post]
+// @Router       /v1/instance/{instance}/message/document [post]
 func (s *Message) SendDocument(ctx echo.Context) error {
 	var request dto.SendDocumentRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -292,7 +292,7 @@ func (s *Message) sendDocument(ctx echo.Context, request dto.SendDocumentRequest
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /instance/{instance}/message/image [post]
+// @Router       /v1/instance/{instance}/message/image [post]
 func (s *Message) SendImage(ctx echo.Context) error {
 	var request dto.SendDocumentRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -356,7 +356,7 @@ func (s *Message) sendImage(ctx echo.Context, request dto.SendDocumentRequest) e
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /message/sendReaction/{instance} [post]
+// @Router       /v1/message/sendReaction/{instance} [post]
 func (s *Message) SendReaction(ctx echo.Context) error {
 	var request dto.SendReactionRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -418,8 +418,8 @@ func (s *Message) SendReaction(ctx echo.Context) error {
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /instance/{instance}/message/list [post]
-// @Router       /message/sendList/{instance} [post]
+// @Router       /v1/instance/{instance}/message/list [post]
+// @Router       /v1/message/sendList/{instance} [post]
 func (s *Message) SendList(ctx echo.Context) error {
 	var request dto.SendListRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -506,8 +506,8 @@ func (s *Message) SendList(ctx echo.Context) error {
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
-// @Router       /instance/{instance}/message/buttons [post]
-// @Router       /message/sendButtons/{instance} [post]
+// @Router       /v1/instance/{instance}/message/buttons [post]
+// @Router       /v1/message/sendButtons/{instance} [post]
 func (s *Message) SendButtons(ctx echo.Context) error {
 	var request dto.SendButtonsRequest
 	if err := ctx.Bind(&request); err != nil {

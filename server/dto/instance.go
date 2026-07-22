@@ -14,7 +14,7 @@ type CreateInstanceRequest struct {
 }
 
 type MigrationData struct {
-	Creds   json.RawMessage   `json:"creds" validate:"required"`
+	Creds   json.RawMessage   `json:"creds" validate:"required" swaggertype:"object"`
 	PreKeys []MigrationPreKey `json:"preKeys,omitempty"`
 }
 
@@ -117,8 +117,8 @@ type RestartInstanceRequest struct {
 }
 
 type RestartInstanceResponse struct {
-	ID       string                          `json:"id,omitempty"`
-	Status   string                          `json:"state,omitempty"`
+	ID       string                           `json:"id,omitempty"`
+	Status   string                           `json:"state,omitempty"`
 	Instance *RestartInstanceEvoCompatibility `json:"instance,omitempty"`
 }
 
