@@ -57,7 +57,16 @@ func (s *Whatsmiau) getCtx(ctx context.Context, url string) (*http.Response, err
 }
 
 // fetchBytes downloads url contents into memory and guarantees the response body is closed.
+// Supports both HTTP(S) URLs and data: URIs (Base64).
 func (s *Whatsmiau) fetchBytes(ctx context.Context, url string) ([]byte, error) {
+	if strings.HasPrefix(url, "data:") {
+		_, _, decoded, err := extractFromBase64(url)
+		if err != nil {
+			return nil, fmt.Errorf("decode base64 media: %w", err)
+		}
+		return decoded, nil
+	}
+
 	res, err := s.getCtx(ctx, url)
 	if err != nil {
 		return nil, err
