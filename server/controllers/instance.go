@@ -423,24 +423,12 @@ func (s *Instance) Delete(ctx echo.Context) error {
 		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request body")
 	}
 
-	result, err := s.repo.List(c, request.ID)
-	if err != nil {
-		zap.L().Error("failed to list instances", zap.Error(err))
-		return utils.HTTPFail(ctx, http.StatusInternalServerError, err, "failed to list instances")
-	}
-
-	if len(result) == 0 {
-		return ctx.JSON(http.StatusOK, dto.DeleteInstanceResponse{
-			Message: "instance doesn't exists",
-		})
-	}
-
-	if err := s.whatsmiau.Logout(ctx.Request().Context(), request.ID); err != nil {
-		zap.L().Error("failed to disconnect instance", zap.Error(err))
-		return utils.HTTPFail(ctx, http.StatusInternalServerError, err, "failed to logout instance")
-	}
-
-	if err := s.repo.Delete(c, request.ID); err != nil {
+	if err := s.whatsmiau.Delete(c, request.ID); err != nil {
+		if errors.Is(err, instances.ErrorNotFound) {
+			return ctx.JSON(http.StatusOK, dto.DeleteInstanceResponse{
+				Message: "instance doesn't exist",
+			})
+		}
 		zap.L().Error("failed to delete instance", zap.Error(err))
 		return utils.HTTPFail(ctx, http.StatusInternalServerError, err, "failed to delete instance")
 	}

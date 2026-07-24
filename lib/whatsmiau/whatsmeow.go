@@ -319,6 +319,14 @@ func (s *Whatsmiau) generateClient(ctx context.Context, id string) (*whatsmeow.C
 
 	client, ok := s.clients.Load(id)
 	if !ok {
+		instanceList, err := s.repo.List(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if len(instanceList) == 0 {
+			return nil, instances.ErrorNotFound
+		}
+
 		device := s.container.NewDevice()
 
 		client = whatsmeow.NewClient(device, s.logger)
@@ -568,6 +576,14 @@ func (s *Whatsmiau) Status(id string) (Status, error) {
 }
 
 func (s *Whatsmiau) Logout(ctx context.Context, id string) error {
+	lock, _ := s.lockConnection.LoadOrStore(id, &sync.Mutex{})
+	lock.Lock()
+	defer lock.Unlock()
+
+	return s.logoutUnlocked(ctx, id)
+}
+
+func (s *Whatsmiau) logoutUnlocked(ctx context.Context, id string) error {
 	client, ok := s.clients.Load(id)
 	if !ok {
 		zap.L().Warn("logout: client does not exist", zap.String("id", id))
@@ -575,7 +591,34 @@ func (s *Whatsmiau) Logout(ctx context.Context, id string) error {
 	}
 
 	s.deleteClient(id)
-	return s.deleteDeviceIfExists(ctx, client)
+	if err := s.deleteDeviceIfExists(ctx, client); err != nil {
+		return err
+	}
+	s.clearInstanceRuntimeState(id)
+	return nil
+}
+
+// Delete serializes runtime cleanup and Redis deletion with Connect/Restart.
+// Together with conditional Redis updates, this prevents late goroutines from
+// recreating an instance key after deletion.
+func (s *Whatsmiau) Delete(ctx context.Context, id string) error {
+	lock, _ := s.lockConnection.LoadOrStore(id, &sync.Mutex{})
+	lock.Lock()
+	defer lock.Unlock()
+
+	if err := s.logoutUnlocked(ctx, id); err != nil {
+		return err
+	}
+	s.clearInstanceRuntimeState(id)
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *Whatsmiau) clearInstanceRuntimeState(id string) {
+	s.qrCache.Delete(id)
+	s.pairingCache.Delete(id)
+	s.observerRunning.Delete(id)
+	s.instanceCache.Delete(id)
+	s.connectPhoneNumber.Delete(id)
 }
 
 func (s *Whatsmiau) Disconnect(id string) error {
