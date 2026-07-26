@@ -584,6 +584,8 @@ func (s *Whatsmiau) Logout(ctx context.Context, id string) error {
 }
 
 func (s *Whatsmiau) logoutUnlocked(ctx context.Context, id string) error {
+	defer s.clearInstanceRuntimeState(id)
+
 	client, ok := s.clients.Load(id)
 	if !ok {
 		zap.L().Warn("logout: client does not exist", zap.String("id", id))
@@ -594,7 +596,6 @@ func (s *Whatsmiau) logoutUnlocked(ctx context.Context, id string) error {
 	if err := s.deleteDeviceIfExists(ctx, client); err != nil {
 		return err
 	}
-	s.clearInstanceRuntimeState(id)
 	return nil
 }
 
@@ -609,7 +610,6 @@ func (s *Whatsmiau) Delete(ctx context.Context, id string) error {
 	if err := s.logoutUnlocked(ctx, id); err != nil {
 		return err
 	}
-	s.clearInstanceRuntimeState(id)
 	return s.repo.Delete(ctx, id)
 }
 
