@@ -1433,7 +1433,7 @@ func (s *Whatsmiau) uploadMessageFile(ctx context.Context, instance *models.Inst
 			b64Result = base64.StdEncoding.EncodeToString(data)
 		}
 	}
-	if s.fileStorage != nil {
+	if s.fileStorage != nil && shouldSaveMedia(instance) {
 		if _, err := tmpFile.Seek(0, io.SeekStart); err != nil {
 			zap.L().Error("failed to seek image", zap.Error(err))
 		}
