@@ -325,6 +325,13 @@ func canIgnoreMessage(msg *events.Message) bool {
 	return strings.Contains(msg.Info.Chat.String(), "status")
 }
 
+// shouldSaveMedia returns true if message media must be persisted in the file storage.
+// A nil SaveMedia means enabled, preserving the behavior of instances created before
+// this flag existed.
+func shouldSaveMedia(instance *models.Instance) bool {
+	return instance.SaveMedia == nil || *instance.SaveMedia
+}
+
 // canIgnoreGroup returns true if group can be ignored
 func canIgnoreGroup(evt interface{}, instance *models.Instance) bool {
 	if instance.GroupsIgnore == nil || !*instance.GroupsIgnore {

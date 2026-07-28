@@ -96,6 +96,10 @@ func (s *RedisInstance) Update(ctx context.Context, id string, toUpdate *models.
 		oldInstance.GroupsIgnore = toUpdate.GroupsIgnore
 	}
 
+	if toUpdate.SaveMedia != nil {
+		oldInstance.SaveMedia = toUpdate.SaveMedia
+	}
+
 	if toUpdate.ProxyHost != "" {
 		oldInstance.InstanceProxy = toUpdate.InstanceProxy
 	}

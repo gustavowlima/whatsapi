@@ -148,6 +148,9 @@ func (s *Instance) Update(ctx echo.Context) error {
 	if request.GroupsIgnore != nil {
 		toUpdate.GroupsIgnore = request.GroupsIgnore
 	}
+	if request.SaveMedia != nil {
+		toUpdate.SaveMedia = request.SaveMedia
+	}
 
 	instance, err := s.repo.Update(c, request.ID, toUpdate)
 	if err != nil {

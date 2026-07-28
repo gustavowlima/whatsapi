@@ -80,3 +80,48 @@ func TestDeleteReportsMissingInstance(t *testing.T) {
 		t.Fatalf("delete error = %v, want ErrorNotFound", err)
 	}
 }
+
+// TestUpdateOnlyTouchesSaveMediaWhenProvided guards the pointer semantics of SaveMedia.
+// The value under test is true on purpose: with false, an update that wrongly forced the
+// field would also produce false and the test would pass without detecting anything.
+func TestUpdateOnlyTouchesSaveMediaWhenProvided(t *testing.T) {
+	repo, _, _ := newTestRepository(t)
+	ctx := context.Background()
+
+	enabled, disabled := true, false
+	if err := repo.Create(ctx, &models.Instance{ID: "media", SaveMedia: &enabled}); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	// An update that does not mention SaveMedia must leave it alone.
+	updated, err := repo.Update(ctx, "media", &models.Instance{RemoteJID: "123@s.whatsapp.net"})
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if updated.SaveMedia == nil {
+		t.Fatal("update without SaveMedia cleared the stored value")
+	}
+	if !*updated.SaveMedia {
+		t.Error("update without SaveMedia overwrote the stored value")
+	}
+
+	// An explicit false must be persisted, and must survive serialization: with a plain
+	// bool on the model, omitempty would drop it and it would read back as absent.
+	if _, err := repo.Update(ctx, "media", &models.Instance{SaveMedia: &disabled}); err != nil {
+		t.Fatalf("update to false: %v", err)
+	}
+
+	stored, err := repo.List(ctx, "media")
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(stored) != 1 {
+		t.Fatalf("len(list) = %d, want 1", len(stored))
+	}
+	if stored[0].SaveMedia == nil {
+		t.Fatal("explicit false vanished when serializing to Redis")
+	}
+	if *stored[0].SaveMedia {
+		t.Error("explicit false was not persisted")
+	}
+}
