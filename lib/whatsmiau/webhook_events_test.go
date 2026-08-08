@@ -7,6 +7,10 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/verbeux-ai/whatsmiau/models"
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
 )
 
 func TestWebhookEventMapNormalizesConfigurationAliases(t *testing.T) {
@@ -67,6 +71,10 @@ func TestWebhookPayloadEventIdentifiersRemainLowercase(t *testing.T) {
 		expected string
 	}{
 		{event: WookMessagesUpsert, expected: "messages.upsert"},
+		{event: WookMessagesUpdate, expected: "messages.update"},
+		{event: WookMessagesDelete, expected: "messages.delete"},
+		{event: WookMessagesSet, expected: "messages.set"},
+		{event: WookContactsUpsert, expected: "contacts.upsert"},
 		{event: WookGroupParticipantsUpdate, expected: "group-participants.update"},
 		{event: WookConnectionUpdate, expected: "connection.update"},
 		{event: WookCall, expected: "call"},
@@ -87,6 +95,55 @@ func TestWebhookPayloadEventIdentifiersRemainLowercase(t *testing.T) {
 			}
 			if envelope.Event != tt.expected {
 				t.Fatalf("expected event %q, got %q", tt.expected, envelope.Event)
+			}
+		})
+	}
+}
+
+func TestMessageWebhookAcceptsCanonicalAndPayloadConfiguration(t *testing.T) {
+	for _, configuredEvent := range []string{"MESSAGES_UPSERT", "messages.upsert"} {
+		t.Run(configuredEvent, func(t *testing.T) {
+			service := &Whatsmiau{
+				clients: xsync.NewMap[string, *whatsmeow.Client](),
+				emitter: make(chan emitter, 1),
+			}
+			service.clients.Store("instance-1", &whatsmeow.Client{})
+			instance := &models.Instance{
+				ID: "instance-1",
+				Webhook: models.InstanceWebhook{
+					Url:    "https://webhook.example/messages",
+					Events: []string{configuredEvent},
+				},
+			}
+			conversation := "hello"
+			event := &events.Message{
+				Info: types.MessageInfo{
+					MessageSource: types.MessageSource{
+						Chat:   types.NewJID("5511999999999", types.DefaultUserServer),
+						Sender: types.NewJID("5511888888888", types.DefaultUserServer),
+					},
+					ID:        "message-1",
+					Timestamp: time.Date(2026, time.July, 17, 12, 0, 0, 0, time.UTC),
+				},
+				Message: &waE2E.Message{Conversation: &conversation},
+			}
+
+			service.handleMessageEvent("instance-1", instance, event, webhookEventMap(instance.Webhook.Events))
+
+			select {
+			case emitted := <-service.emitter:
+				payload, ok := emitted.data.(*WookEvent[WookMessageData])
+				if !ok {
+					t.Fatalf("unexpected emitted data type %T", emitted.data)
+				}
+				if emitted.url != "https://webhook.example/messages" {
+					t.Fatalf("unexpected webhook URL %q", emitted.url)
+				}
+				if payload.Event != WookMessagesUpsert {
+					t.Fatalf("unexpected payload event %q", payload.Event)
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("expected message webhook for configuration %q", configuredEvent)
 			}
 		})
 	}
