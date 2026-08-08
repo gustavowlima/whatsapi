@@ -3,6 +3,10 @@ package whatsmiau
 import (
 	"encoding/json"
 	"testing"
+	"time"
+
+	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/verbeux-ai/whatsmiau/models"
 )
 
 func TestWebhookEventMapNormalizesConfigurationAliases(t *testing.T) {
@@ -83,6 +87,44 @@ func TestWebhookPayloadEventIdentifiersRemainLowercase(t *testing.T) {
 			}
 			if envelope.Event != tt.expected {
 				t.Fatalf("expected event %q, got %q", tt.expected, envelope.Event)
+			}
+		})
+	}
+}
+
+func TestEmitConnectionUpdateAcceptsCanonicalAndPayloadConfiguration(t *testing.T) {
+	for _, configuredEvent := range []string{"CONNECTION_UPDATE", "connection.update"} {
+		t.Run(configuredEvent, func(t *testing.T) {
+			enabled := true
+			service := &Whatsmiau{
+				instanceCache: xsync.NewMap[string, models.Instance](),
+				emitter:       make(chan emitter, 1),
+			}
+			service.instanceCache.Store("instance-1", models.Instance{
+				ID: "instance-1",
+				Webhook: models.InstanceWebhook{
+					Enabled: &enabled,
+					Url:     "https://webhook.example/connection",
+					Events:  []string{configuredEvent},
+				},
+			})
+
+			service.emitConnectionUpdate("instance-1", "connecting", 0)
+
+			select {
+			case emitted := <-service.emitter:
+				payload, ok := emitted.data.(*WookEvent[WookConnectionUpdateData])
+				if !ok {
+					t.Fatalf("unexpected emitted data type %T", emitted.data)
+				}
+				if emitted.url != "https://webhook.example/connection" {
+					t.Fatalf("unexpected webhook URL %q", emitted.url)
+				}
+				if payload.Event != WookConnectionUpdate {
+					t.Fatalf("unexpected payload event %q", payload.Event)
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("expected connection webhook for configuration %q", configuredEvent)
 			}
 		})
 	}

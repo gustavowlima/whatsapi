@@ -777,11 +777,7 @@ func (s *Whatsmiau) emitConnectionUpdate(id string, state string, statusReason i
 		return
 	}
 
-	eventMap := make(map[webhookConfigEvent]bool)
-	for _, evt := range instance.Webhook.Events {
-		eventMap[webhookConfigEvent(evt)] = true
-	}
-
+	eventMap := webhookEventMap(instance.Webhook.Events)
 	s.handleConnectionUpdateEvent(id, instance, state, statusReason, eventMap)
 }
 
