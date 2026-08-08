@@ -8,6 +8,7 @@ import (
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/verbeux-ai/whatsmiau/models"
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waCommon"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -184,5 +185,162 @@ func TestEmitConnectionUpdateAcceptsCanonicalAndPayloadConfiguration(t *testing.
 				t.Fatalf("expected connection webhook for configuration %q", configuredEvent)
 			}
 		})
+	}
+}
+
+func TestMessageDeleteWebhookUsesDeleteSubscription(t *testing.T) {
+	for _, configuredEvent := range []string{"MESSAGES_DELETE", "messages.delete"} {
+		t.Run(configuredEvent, func(t *testing.T) {
+			service := &Whatsmiau{
+				clients: xsync.NewMap[string, *whatsmeow.Client](),
+				emitter: make(chan emitter, 1),
+			}
+			service.clients.Store("instance-1", &whatsmeow.Client{})
+			instance := &models.Instance{
+				ID: "instance-1",
+				Webhook: models.InstanceWebhook{
+					Url:    "https://webhook.example/messages",
+					Events: []string{configuredEvent},
+				},
+			}
+			revokeType := waE2E.ProtocolMessage_REVOKE
+			messageID := "message-to-delete"
+			remoteJID := "5511999999999@s.whatsapp.net"
+			participant := "5511888888888@s.whatsapp.net"
+			fromMe := false
+			event := &events.Message{
+				Info: types.MessageInfo{
+					MessageSource: types.MessageSource{
+						Chat:   types.NewJID("5511999999999", types.DefaultUserServer),
+						Sender: types.NewJID("5511888888888", types.DefaultUserServer),
+					},
+				},
+				Message: &waE2E.Message{ProtocolMessage: &waE2E.ProtocolMessage{
+					Type: &revokeType,
+					Key: &waCommon.MessageKey{
+						ID:          &messageID,
+						RemoteJID:   &remoteJID,
+						Participant: &participant,
+						FromMe:      &fromMe,
+					},
+				}},
+			}
+
+			service.handleMessageEvent("instance-1", instance, event, webhookEventMap(instance.Webhook.Events))
+
+			select {
+			case emitted := <-service.emitter:
+				payload, ok := emitted.data.(*WookEvent[WookMessageDeleteData])
+				if !ok {
+					t.Fatalf("unexpected emitted data type %T", emitted.data)
+				}
+				if payload.Event != WookMessagesDelete {
+					t.Fatalf("unexpected payload event %q", payload.Event)
+				}
+				if payload.Data.Id != messageID || payload.Data.RemoteJid != remoteJID || payload.Data.Participant != participant {
+					t.Fatalf("unexpected delete payload: %+v", payload.Data)
+				}
+				if payload.Data.Status != "DELETED" || payload.Data.InstanceId != "instance-1" || payload.Data.FromMe {
+					t.Fatalf("unexpected delete metadata: %+v", payload.Data)
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("expected delete webhook for configuration %q", configuredEvent)
+			}
+		})
+	}
+}
+
+func TestReceiptWebhookEmitsEachMessageUpdate(t *testing.T) {
+	service := &Whatsmiau{
+		clients: xsync.NewMap[string, *whatsmeow.Client](),
+		emitter: make(chan emitter, 2),
+	}
+	service.clients.Store("instance-1", &whatsmeow.Client{})
+	instance := &models.Instance{
+		ID: "instance-1",
+		Webhook: models.InstanceWebhook{
+			Url:    "https://webhook.example/messages",
+			Events: []string{"MESSAGES_UPDATE"},
+		},
+	}
+	timestamp := time.Date(2026, time.July, 17, 12, 0, 0, 0, time.UTC)
+	event := &events.Receipt{
+		MessageSource: types.MessageSource{
+			Chat:     types.NewJID("5511999999999", types.DefaultUserServer),
+			Sender:   types.NewJID("5511888888888", types.DefaultUserServer),
+			IsFromMe: true,
+		},
+		MessageIDs: []types.MessageID{"message-1", "message-2"},
+		Timestamp:  timestamp,
+		Type:       types.ReceiptTypeRead,
+	}
+
+	service.handleReceiptEvent("instance-1", instance, event, webhookEventMap(instance.Webhook.Events))
+
+	for _, expectedID := range event.MessageIDs {
+		select {
+		case emitted := <-service.emitter:
+			payload, ok := emitted.data.(*WookEvent[WookMessageUpdateData])
+			if !ok {
+				t.Fatalf("unexpected emitted data type %T", emitted.data)
+			}
+			if payload.Event != WookMessagesUpdate || !payload.DateTime.Equal(timestamp) {
+				t.Fatalf("unexpected webhook envelope: %+v", payload)
+			}
+			if payload.Data.MessageId != expectedID || payload.Data.Status != MessageStatusRead || !payload.Data.FromMe {
+				t.Fatalf("unexpected update payload: %+v", payload.Data)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("expected update webhook for message %q", expectedID)
+		}
+	}
+}
+
+func TestWebhookSubscriptionsRemainIsolated(t *testing.T) {
+	enabled := true
+	service := &Whatsmiau{
+		clients:       xsync.NewMap[string, *whatsmeow.Client](),
+		instanceCache: xsync.NewMap[string, models.Instance](),
+		emitter:       make(chan emitter, 1),
+	}
+	service.instanceCache.Store("instance-1", models.Instance{
+		ID: "instance-1",
+		Webhook: models.InstanceWebhook{
+			Enabled: &enabled,
+			Url:     "https://webhook.example/events",
+			Events:  []string{"MESSAGES_UPSERT"},
+		},
+	})
+
+	service.emitConnectionUpdate("instance-1", "connecting", 0)
+
+	select {
+	case emitted := <-service.emitter:
+		t.Fatalf("message subscription unexpectedly emitted connection event: %#v", emitted)
+	default:
+	}
+
+	conversation := "hello"
+	message := &events.Message{
+		Info: types.MessageInfo{MessageSource: types.MessageSource{
+			Chat:   types.NewJID("5511999999999", types.DefaultUserServer),
+			Sender: types.NewJID("5511888888888", types.DefaultUserServer),
+		}},
+		Message: &waE2E.Message{Conversation: &conversation},
+	}
+	instance := &models.Instance{
+		ID: "instance-1",
+		Webhook: models.InstanceWebhook{
+			Url:    "https://webhook.example/events",
+			Events: []string{"CONNECTION_UPDATE"},
+		},
+	}
+
+	service.handleMessageEvent("instance-1", instance, message, webhookEventMap(instance.Webhook.Events))
+
+	select {
+	case emitted := <-service.emitter:
+		t.Fatalf("connection subscription unexpectedly emitted message event: %#v", emitted)
+	default:
 	}
 }
