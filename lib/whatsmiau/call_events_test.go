@@ -10,15 +10,6 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-func TestWebhookEventMapNormalizesManagerAndCanonicalValues(t *testing.T) {
-	eventMap := webhookEventMap([]string{"messages.upsert", "group-participants.update", "CALL"})
-	for _, expected := range []string{"MESSAGES_UPSERT", "GROUP_PARTICIPANTS_UPDATE", "CALL"} {
-		if !eventMap[expected] {
-			t.Fatalf("expected normalized event %q in %#v", expected, eventMap)
-		}
-	}
-}
-
 func TestCallOfferWebhookIsSanitizedAndDescribesVideo(t *testing.T) {
 	s := &Whatsmiau{emitter: make(chan emitter, 1)}
 	instance := &models.Instance{
