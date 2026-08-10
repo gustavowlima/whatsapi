@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *Whatsmiau) handleCallOfferEvent(id string, instance *models.Instance, event *events.CallOffer, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallOfferEvent(id string, instance *models.Instance, event *events.CallOffer, eventMap map[webhookConfigEvent]bool) {
 	media, isVideo := callMediaFromOffer(event.Data)
 	data := newWookCallData(event.BasicCallMeta, "offer")
 	data.Media = media
@@ -21,7 +21,7 @@ func (s *Whatsmiau) handleCallOfferEvent(id string, instance *models.Instance, e
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallOfferNoticeEvent(id string, instance *models.Instance, event *events.CallOfferNotice, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallOfferNoticeEvent(id string, instance *models.Instance, event *events.CallOfferNotice, eventMap map[webhookConfigEvent]bool) {
 	data := newWookCallData(event.BasicCallMeta, "offer")
 	data.Media = event.Media
 	data.IsGroup = data.IsGroup || event.Type == "group"
@@ -32,43 +32,43 @@ func (s *Whatsmiau) handleCallOfferNoticeEvent(id string, instance *models.Insta
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallPreAcceptEvent(id string, instance *models.Instance, event *events.CallPreAccept, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallPreAcceptEvent(id string, instance *models.Instance, event *events.CallPreAccept, eventMap map[webhookConfigEvent]bool) {
 	data := newWookCallData(event.BasicCallMeta, "preaccept")
 	data.RemotePlatform = event.RemotePlatform
 	data.RemoteVersion = event.RemoteVersion
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallAcceptEvent(id string, instance *models.Instance, event *events.CallAccept, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallAcceptEvent(id string, instance *models.Instance, event *events.CallAccept, eventMap map[webhookConfigEvent]bool) {
 	data := newWookCallData(event.BasicCallMeta, "accept")
 	data.RemotePlatform = event.RemotePlatform
 	data.RemoteVersion = event.RemoteVersion
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallTransportEvent(id string, instance *models.Instance, event *events.CallTransport, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallTransportEvent(id string, instance *models.Instance, event *events.CallTransport, eventMap map[webhookConfigEvent]bool) {
 	data := newWookCallData(event.BasicCallMeta, "transport")
 	data.RemotePlatform = event.RemotePlatform
 	data.RemoteVersion = event.RemoteVersion
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallRelayLatencyEvent(id string, instance *models.Instance, event *events.CallRelayLatency, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallRelayLatencyEvent(id string, instance *models.Instance, event *events.CallRelayLatency, eventMap map[webhookConfigEvent]bool) {
 	s.emitCallEvent(id, instance, newWookCallData(event.BasicCallMeta, "relaylatency"), event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallRejectEvent(id string, instance *models.Instance, event *events.CallReject, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallRejectEvent(id string, instance *models.Instance, event *events.CallReject, eventMap map[webhookConfigEvent]bool) {
 	s.emitCallEvent(id, instance, newWookCallData(event.BasicCallMeta, "reject"), event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) handleCallTerminateEvent(id string, instance *models.Instance, event *events.CallTerminate, eventMap map[string]bool) {
+func (s *Whatsmiau) handleCallTerminateEvent(id string, instance *models.Instance, event *events.CallTerminate, eventMap map[webhookConfigEvent]bool) {
 	data := newWookCallData(event.BasicCallMeta, "terminate")
 	data.Reason = event.Reason
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
 }
 
-func (s *Whatsmiau) emitCallEvent(id string, instance *models.Instance, data *WookCallData, timestamp time.Time, eventMap map[string]bool) {
-	if !eventMap["CALL"] {
+func (s *Whatsmiau) emitCallEvent(id string, instance *models.Instance, data *WookCallData, timestamp time.Time, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigCall] {
 		return
 	}
 	if timestamp.IsZero() || timestamp.Unix() <= 0 {

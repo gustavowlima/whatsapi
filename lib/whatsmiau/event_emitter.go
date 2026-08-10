@@ -277,17 +277,6 @@ func (s *Whatsmiau) Handle(id string) whatsmeow.EventHandler {
 	}
 }
 
-func webhookEventMap(events []string) map[string]bool {
-	eventMap := make(map[string]bool, len(events))
-	for _, event := range events {
-		normalized := strings.NewReplacer(".", "_", "-", "_").Replace(strings.ToUpper(strings.TrimSpace(event)))
-		if normalized != "" {
-			eventMap[normalized] = true
-		}
-	}
-	return eventMap
-}
-
 func (s *Whatsmiau) handleLoggedOut(id string) {
 	s.stopHistorySyncWatchdog(id)
 
@@ -301,7 +290,7 @@ func (s *Whatsmiau) handleLoggedOut(id string) {
 
 	s.deleteClient(id)
 }
-func (s *Whatsmiau) handleMessageEvent(id string, instance *models.Instance, e *events.Message, eventMap map[string]bool) {
+func (s *Whatsmiau) handleMessageEvent(id string, instance *models.Instance, e *events.Message, eventMap map[webhookConfigEvent]bool) {
 	if e.Message != nil {
 		if pm := e.Message.GetProtocolMessage(); pm != nil && pm.GetType() == waE2E.ProtocolMessage_REVOKE {
 			s.handleMessageDeleteEvent(id, instance, e, eventMap)
@@ -309,7 +298,7 @@ func (s *Whatsmiau) handleMessageEvent(id string, instance *models.Instance, e *
 		}
 	}
 
-	if !eventMap["MESSAGES_UPSERT"] {
+	if !eventMap[webhookConfigMessagesUpsert] {
 		return
 	}
 
@@ -349,8 +338,8 @@ func (s *Whatsmiau) handleMessageEvent(id string, instance *models.Instance, e *
 	s.emit(wookMessage, instance.Webhook.Url)
 }
 
-func (s *Whatsmiau) handleMessageDeleteEvent(id string, instance *models.Instance, e *events.Message, eventMap map[string]bool) {
-	if !eventMap["MESSAGES_DELETE"] {
+func (s *Whatsmiau) handleMessageDeleteEvent(id string, instance *models.Instance, e *events.Message, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigMessagesDelete] {
 		return
 	}
 
@@ -398,8 +387,8 @@ func (s *Whatsmiau) handleMessageDeleteEvent(id string, instance *models.Instanc
 	s.emit(wookEvent, instance.Webhook.Url)
 }
 
-func (s *Whatsmiau) handleReceiptEvent(id string, instance *models.Instance, e *events.Receipt, eventMap map[string]bool) {
-	if !eventMap["MESSAGES_UPDATE"] {
+func (s *Whatsmiau) handleReceiptEvent(id string, instance *models.Instance, e *events.Receipt, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigMessagesUpdate] {
 		return
 	}
 
@@ -424,8 +413,8 @@ func (s *Whatsmiau) handleReceiptEvent(id string, instance *models.Instance, e *
 	}
 }
 
-func (s *Whatsmiau) handleBusinessNameEvent(id string, instance *models.Instance, e *events.BusinessName, eventMap map[string]bool) {
-	if !eventMap["CONTACTS_UPSERT"] {
+func (s *Whatsmiau) handleBusinessNameEvent(id string, instance *models.Instance, e *events.BusinessName, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigContactsUpsert] {
 		return
 	}
 
@@ -445,8 +434,8 @@ func (s *Whatsmiau) handleBusinessNameEvent(id string, instance *models.Instance
 	s.emit(wookData, instance.Webhook.Url)
 }
 
-func (s *Whatsmiau) handleContactEvent(id string, instance *models.Instance, e *events.Contact, eventMap map[string]bool) {
-	if !eventMap["CONTACTS_UPSERT"] {
+func (s *Whatsmiau) handleContactEvent(id string, instance *models.Instance, e *events.Contact, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigContactsUpsert] {
 		return
 	}
 
@@ -470,8 +459,8 @@ func (s *Whatsmiau) handleContactEvent(id string, instance *models.Instance, e *
 	s.emit(wookData, instance.Webhook.Url)
 }
 
-func (s *Whatsmiau) handlePictureEvent(id string, instance *models.Instance, e *events.Picture, eventMap map[string]bool) {
-	if !eventMap["CONTACTS_UPSERT"] {
+func (s *Whatsmiau) handlePictureEvent(id string, instance *models.Instance, e *events.Picture, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigContactsUpsert] {
 		return
 	}
 
@@ -497,7 +486,7 @@ var (
 
 const historySyncTimeout = 180 * time.Second
 
-func (s *Whatsmiau) handleHistorySyncEvent(id string, instance *models.Instance, e *events.HistorySync, eventMap map[string]bool) {
+func (s *Whatsmiau) handleHistorySyncEvent(id string, instance *models.Instance, e *events.HistorySync, eventMap map[webhookConfigEvent]bool) {
 	if e == nil || e.Data == nil {
 		return
 	}
@@ -505,7 +494,7 @@ func (s *Whatsmiau) handleHistorySyncEvent(id string, instance *models.Instance,
 	progress := e.Data.GetProgress()
 	isLatest := progress >= 100
 
-	if instance.SyncFullHistory && eventMap["MESSAGES_SET"] {
+	if instance.SyncFullHistory && eventMap[webhookConfigMessagesSet] {
 		var messages []WookMessageData
 		for _, conv := range e.Data.Conversations {
 			for _, msg := range conv.GetMessages() {
@@ -544,7 +533,7 @@ func (s *Whatsmiau) handleHistorySyncEvent(id string, instance *models.Instance,
 		}
 	}
 
-	if !eventMap["CONTACTS_UPSERT"] {
+	if !eventMap[webhookConfigContactsUpsert] {
 		return
 	}
 
@@ -591,8 +580,8 @@ func (s *Whatsmiau) stopHistorySyncWatchdog(id string) {
 	cleanHistorySyncState(id)
 }
 
-func (s *Whatsmiau) handleGroupInfoEvent(id string, instance *models.Instance, e *events.GroupInfo, eventMap map[string]bool) {
-	if !eventMap["CONTACTS_UPSERT"] {
+func (s *Whatsmiau) handleGroupInfoEvent(id string, instance *models.Instance, e *events.GroupInfo, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigContactsUpsert] {
 		return
 	}
 
@@ -657,8 +646,8 @@ func (s *Whatsmiau) emitGroupParticipantsUpdate(id string, instance *models.Inst
 	s.emit(wookEvent, instance.Webhook.Url)
 }
 
-func (s *Whatsmiau) handleGroupParticipantsUpdateEvent(id string, instance *models.Instance, e *events.GroupInfo, eventMap map[string]bool) {
-	if !eventMap["GROUP_PARTICIPANTS_UPDATE"] {
+func (s *Whatsmiau) handleGroupParticipantsUpdateEvent(id string, instance *models.Instance, e *events.GroupInfo, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigGroupParticipantsUpdate] {
 		return
 	}
 
@@ -694,8 +683,8 @@ func (s *Whatsmiau) handleGroupParticipantsUpdateEvent(id string, instance *mode
 	}
 }
 
-func (s *Whatsmiau) handleJoinedGroupEvent(id string, instance *models.Instance, e *events.JoinedGroup, eventMap map[string]bool) {
-	if !eventMap["GROUP_PARTICIPANTS_UPDATE"] {
+func (s *Whatsmiau) handleJoinedGroupEvent(id string, instance *models.Instance, e *events.JoinedGroup, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigGroupParticipantsUpdate] {
 		return
 	}
 
@@ -728,8 +717,8 @@ func (s *Whatsmiau) handleJoinedGroupEvent(id string, instance *models.Instance,
 	s.emitGroupParticipantsUpdate(id, instance, e.JID.ToNonAD().String(), author, []types.JID{instanceJID}, time.Now(), "add", nil)
 }
 
-func (s *Whatsmiau) handlePushNameEvent(id string, instance *models.Instance, e *events.PushName, eventMap map[string]bool) {
-	if !eventMap["CONTACTS_UPSERT"] {
+func (s *Whatsmiau) handlePushNameEvent(id string, instance *models.Instance, e *events.PushName, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigContactsUpsert] {
 		return
 	}
 
@@ -753,8 +742,8 @@ func (s *Whatsmiau) handlePushNameEvent(id string, instance *models.Instance, e 
 	s.emit(wookData, instance.Webhook.Url)
 }
 
-func (s *Whatsmiau) handleConnectionUpdateEvent(id string, instance *models.Instance, state string, statusReason int, eventMap map[string]bool) {
-	if !eventMap["CONNECTION_UPDATE"] {
+func (s *Whatsmiau) handleConnectionUpdateEvent(id string, instance *models.Instance, state string, statusReason int, eventMap map[webhookConfigEvent]bool) {
+	if !eventMap[webhookConfigConnectionUpdate] {
 		return
 	}
 
@@ -788,11 +777,7 @@ func (s *Whatsmiau) emitConnectionUpdate(id string, state string, statusReason i
 		return
 	}
 
-	eventMap := make(map[string]bool)
-	for _, evt := range instance.Webhook.Events {
-		eventMap[evt] = true
-	}
-
+	eventMap := webhookEventMap(instance.Webhook.Events)
 	s.handleConnectionUpdateEvent(id, instance, state, statusReason, eventMap)
 }
 

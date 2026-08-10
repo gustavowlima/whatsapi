@@ -182,16 +182,20 @@ curl -X POST 'http://localhost:8080/v1/message/sendText/my-instance' \
 
 ## Supported Events
 
-The application can send webhook events for the following actions:
+Webhook configuration and webhook payloads use different event identifiers to preserve Evolution API compatibility. Configure subscriptions with the uppercase value. The emitted payload uses the lowercase value in its `event` field.
 
-| Event             | Description                                         |
-|-------------------|-----------------------------------------------------|
-| `MESSAGES_UPSERT` | Triggered when a new message is received.           |
-| `MESSAGES_UPDATE` | Triggered when a message status changes (e.g., read). |
-| `MESSAGES_DELETE` | Triggered when a message is deleted for everyone.   |
-| `CONTACTS_UPSERT` | Triggered when a contact is created or updated.     |
-| `CONNECTION_UPDATE` | Triggered when connection state changes (connected, disconnected, failed). |
-| `CALL` | Triggered for call signaling (`offer`, `accept`, `terminate`, etc.); no media, SDP, or call key is included. |
+| Configuration value | Payload `event` value | Description |
+|---------------------|-----------------------|-------------|
+| `MESSAGES_UPSERT` | `messages.upsert` | Triggered when a new message is received. |
+| `MESSAGES_UPDATE` | `messages.update` | Triggered when a message status changes, such as a read receipt. |
+| `MESSAGES_DELETE` | `messages.delete` | Triggered when a message is deleted for everyone. |
+| `MESSAGES_SET` | `messages.set` | Triggered during full-history synchronization when `syncFullHistory` is enabled. |
+| `CONTACTS_UPSERT` | `contacts.upsert` | Triggered when a contact is created or updated. |
+| `GROUP_PARTICIPANTS_UPDATE` | `group-participants.update` | Triggered when participants are added, removed, promoted, or demoted. |
+| `CONNECTION_UPDATE` | `connection.update` | Triggered when connection state changes. |
+| `CALL` | `call` | Triggered for call signaling; no media data, SDP, or call/session keys are included. |
+
+Payload-style values such as `messages.upsert` remain accepted in configuration for compatibility with older Manager UI versions. WhatsMiau stores and returns configured values as provided; it normalizes them only when matching subscriptions.
 
 ## Contributors
 
