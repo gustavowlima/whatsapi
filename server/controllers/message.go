@@ -68,9 +68,17 @@ func (s *Message) SendText(ctx echo.Context) error {
 		RemoteJID:  jid,
 	}
 
-	if request.Quoted != nil && len(request.Quoted.Key.Id) > 0 && len(request.Quoted.Message.Conversation) > 0 {
-		sendText.QuoteMessage = request.Quoted.Message.Conversation
+	if request.Quoted != nil && len(request.Quoted.Key.Id) > 0 {
 		sendText.QuoteMessageID = request.Quoted.Key.Id
+		sendText.QuoteMessage = request.Quoted.Message.Conversation
+		if request.Quoted.Key.Participant != "" {
+			p, err := numberToJid(request.Quoted.Key.Participant)
+			if err != nil {
+				zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+				return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+			}
+			sendText.Participant = p
+		}
 	}
 
 	c := ctx.Request().Context()

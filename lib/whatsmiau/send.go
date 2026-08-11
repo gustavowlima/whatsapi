@@ -41,32 +41,7 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
 	data.RemoteJID = &resolved
 
-	//rJid := data.RemoteJID.ToNonAD().String()
-	var extendedMessage *waE2E.ExtendedTextMessage
-	if len(data.QuoteMessage) > 0 && len(data.QuoteMessageID) > 0 {
-		extendedMessage = &waE2E.ExtendedTextMessage{
-			//ContextInfo: &waE2E.ContextInfo{ // TODO: implement quoted message
-			//	StanzaID:    &data.QuoteMessageID,
-			//	Participant: &rJid,
-			//	QuotedMessage: &waE2E.Message{
-			//		Conversation: &data.QuoteMessage,
-			//		ProtocolMessage: &waE2E.ProtocolMessage{
-			//			Key: &waCommon.MessageKey{
-			//				RemoteJID:   &rJid,
-			//				FromMe:      &[]bool{true}[0],
-			//				ID:          &data.QuoteMessageID,
-			//				Participant: nil,
-			//			},
-			//		},
-			//	},
-			//},
-		}
-	}
-
-	res, err := client.SendMessage(ctx, *data.RemoteJID, &waE2E.Message{
-		Conversation:        &data.Text,
-		ExtendedTextMessage: extendedMessage,
-	})
+	res, err := client.SendMessage(ctx, *data.RemoteJID, buildSendTextMessage(data))
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +50,33 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 		ID:        res.ID,
 		CreatedAt: res.Timestamp,
 	}, nil
+}
+
+func buildSendTextMessage(data *SendText) *waE2E.Message {
+	if len(data.QuoteMessageID) == 0 {
+		return &waE2E.Message{
+			Conversation: proto.String(data.Text),
+		}
+	}
+
+	contextInfo := &waE2E.ContextInfo{
+		StanzaID: proto.String(data.QuoteMessageID),
+	}
+	if data.Participant != nil {
+		contextInfo.Participant = proto.String(data.Participant.String())
+	}
+	if len(data.QuoteMessage) > 0 {
+		contextInfo.QuotedMessage = &waE2E.Message{
+			Conversation: proto.String(data.QuoteMessage),
+		}
+	}
+
+	return &waE2E.Message{
+		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
+			Text:        proto.String(data.Text),
+			ContextInfo: contextInfo,
+		},
+	}
 }
 
 type SendAudioRequest struct {

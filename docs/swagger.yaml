@@ -143,6 +143,8 @@ definitions:
         type: boolean
       remoteJID:
         type: string
+      saveMedia:
+        type: boolean
       syncFullHistory:
         type: boolean
       syncRecentHistory:
@@ -233,6 +235,8 @@ definitions:
         type: boolean
       remoteJID:
         type: string
+      saveMedia:
+        type: boolean
       syncFullHistory:
         type: boolean
       syncRecentHistory:
@@ -270,6 +274,8 @@ definitions:
         type: boolean
       remoteJID:
         type: string
+      saveMedia:
+        type: boolean
       syncFullHistory:
         type: boolean
       syncRecentHistory:
@@ -449,6 +455,8 @@ definitions:
         type: boolean
       remoteJID:
         type: string
+      saveMedia:
+        type: boolean
       syncFullHistory:
         type: boolean
       syncRecentHistory:
@@ -529,7 +537,13 @@ definitions:
     type: object
   dto.QuotedKey:
     properties:
+      fromMe:
+        type: boolean
       id:
+        type: string
+      participant:
+        type: string
+      remoteJid:
         type: string
     type: object
   dto.QuotedMessage:
@@ -1319,6 +1333,8 @@ definitions:
         type: string
       proxyUsername:
         type: string
+      saveMedia:
+        type: boolean
       webhook:
         properties:
           base64:
@@ -1361,6 +1377,8 @@ definitions:
         type: boolean
       remoteJID:
         type: string
+      saveMedia:
+        type: boolean
       syncFullHistory:
         type: boolean
       syncRecentHistory:
