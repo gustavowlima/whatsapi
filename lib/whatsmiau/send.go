@@ -14,13 +14,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type Quote struct {
+	MessageID   string
+	Message     string
+	Participant *types.JID
+}
+
 type SendText struct {
-	Text           string     `json:"text"`
-	InstanceID     string     `json:"instance_id"`
-	RemoteJID      *types.JID `json:"remote_jid"`
-	QuoteMessageID string     `json:"quote_message_id"`
-	QuoteMessage   string     `json:"quote_message"`
-	Participant    *types.JID `json:"participant"`
+	Text       string     `json:"text"`
+	InstanceID string     `json:"instance_id"`
+	RemoteJID  *types.JID `json:"remote_jid"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendTextResponse struct {
@@ -52,40 +56,45 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 	}, nil
 }
 
-func buildSendTextMessage(data *SendText) *waE2E.Message {
-	if len(data.QuoteMessageID) == 0 {
-		return &waE2E.Message{
-			Conversation: proto.String(data.Text),
-		}
+func buildContextInfo(q *Quote) *waE2E.ContextInfo {
+	if q == nil || len(q.MessageID) == 0 {
+		return nil
 	}
 
-	contextInfo := &waE2E.ContextInfo{
-		StanzaID: proto.String(data.QuoteMessageID),
+	ci := &waE2E.ContextInfo{
+		StanzaID: proto.String(q.MessageID),
 	}
-	if data.Participant != nil {
-		contextInfo.Participant = proto.String(data.Participant.String())
+	if q.Participant != nil {
+		ci.Participant = proto.String(q.Participant.String())
 	}
-	if len(data.QuoteMessage) > 0 {
-		contextInfo.QuotedMessage = &waE2E.Message{
-			Conversation: proto.String(data.QuoteMessage),
+	if len(q.Message) > 0 {
+		ci.QuotedMessage = &waE2E.Message{
+			Conversation: proto.String(q.Message),
+		}
+	}
+	return ci
+}
+
+func buildSendTextMessage(data *SendText) *waE2E.Message {
+	if data.Quote == nil || len(data.Quote.MessageID) == 0 {
+		return &waE2E.Message{
+			Conversation: proto.String(data.Text),
 		}
 	}
 
 	return &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text:        proto.String(data.Text),
-			ContextInfo: contextInfo,
+			ContextInfo: buildContextInfo(data.Quote),
 		},
 	}
 }
 
 type SendAudioRequest struct {
-	AudioURL       string     `json:"text"`
-	InstanceID     string     `json:"instance_id"`
-	RemoteJID      *types.JID `json:"remote_jid"`
-	QuoteMessageID string     `json:"quote_message_id"`
-	QuoteMessage   string     `json:"quote_message"`
-	Participant    *types.JID `json:"participant"`
+	AudioURL   string     `json:"text"`
+	InstanceID string     `json:"instance_id"`
+	RemoteJID  *types.JID `json:"remote_jid"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendAudioResponse struct {
@@ -129,6 +138,7 @@ func (s *Whatsmiau) SendAudio(ctx context.Context, data *SendAudioRequest) (*Sen
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		Waveform:      waveForm,
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
@@ -154,6 +164,7 @@ type SendDocumentRequest struct {
 	FileName   string     `json:"file_name"`
 	RemoteJID  *types.JID `json:"remote_jid"`
 	Mimetype   string     `json:"mimetype"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendDocumentResponse struct {
@@ -191,6 +202,7 @@ func (s *Whatsmiau) SendDocument(ctx context.Context, data *SendDocumentRequest)
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		Caption:       proto.String(data.Caption),
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
@@ -215,6 +227,7 @@ type SendImageRequest struct {
 	Caption    string     `json:"caption"`
 	RemoteJID  *types.JID `json:"remote_jid"`
 	Mimetype   string     `json:"mimetype"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 type SendImageResponse struct {
 	ID        string    `json:"id"`
@@ -254,6 +267,7 @@ func (s *Whatsmiau) SendImage(ctx context.Context, data *SendImageRequest) (*Sen
 		MediaKey:      uploaded.MediaKey,
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)

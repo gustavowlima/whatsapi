@@ -62,23 +62,17 @@ func (s *Message) SendText(ctx echo.Context) error {
 		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
 	}
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	sendText := &whatsmiau.SendText{
 		Text:       request.Text,
 		InstanceID: request.InstanceID,
 		RemoteJID:  jid,
-	}
-
-	if request.Quoted != nil && len(request.Quoted.Key.Id) > 0 {
-		sendText.QuoteMessageID = request.Quoted.Key.Id
-		sendText.QuoteMessage = request.Quoted.Message.Conversation
-		if request.Quoted.Key.Participant != "" {
-			p, err := numberToJid(request.Quoted.Key.Participant)
-			if err != nil {
-				zap.L().Error("error converting quoted participant to jid", zap.Error(err))
-				return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
-			}
-			sendText.Participant = p
-		}
+		Quote:      quote,
 	}
 
 	c := ctx.Request().Context()
@@ -145,15 +139,17 @@ func (s *Message) SendAudio(ctx echo.Context) error {
 		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
 	}
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	sendText := &whatsmiau.SendAudioRequest{
 		AudioURL:   request.Audio,
 		InstanceID: request.InstanceID,
 		RemoteJID:  jid,
-	}
-
-	if request.Quoted != nil && len(request.Quoted.Key.Id) > 0 && len(request.Quoted.Message.Conversation) > 0 {
-		sendText.QuoteMessage = request.Quoted.Message.Conversation
-		sendText.QuoteMessageID = request.Quoted.Key.Id
+		Quote:      quote,
 	}
 
 	c := ctx.Request().Context()
@@ -256,6 +252,12 @@ func (s *Message) sendDocument(ctx echo.Context, request dto.SendDocumentRequest
 		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
 	}
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	sendData := &whatsmiau.SendDocumentRequest{
 		InstanceID: request.InstanceID,
 		MediaURL:   request.Media,
@@ -263,6 +265,7 @@ func (s *Message) sendDocument(ctx echo.Context, request dto.SendDocumentRequest
 		FileName:   request.FileName,
 		RemoteJID:  jid,
 		Mimetype:   request.Mimetype,
+		Quote:      quote,
 	}
 
 	c := ctx.Request().Context()
@@ -321,12 +324,19 @@ func (s *Message) sendImage(ctx echo.Context, request dto.SendDocumentRequest) e
 		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
 	}
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	sendData := &whatsmiau.SendImageRequest{
 		InstanceID: request.InstanceID,
 		MediaURL:   request.Media,
 		Caption:    request.Caption,
 		RemoteJID:  jid,
 		Mimetype:   request.Mimetype,
+		Quote:      quote,
 	}
 
 	c := ctx.Request().Context()

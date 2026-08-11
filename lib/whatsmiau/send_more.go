@@ -21,6 +21,7 @@ type SendVideoRequest struct {
 	RemoteJID   *types.JID `json:"remote_jid"`
 	Mimetype    string     `json:"mimetype"`
 	GifPlayback bool       `json:"gif_playback"`
+	Quote       *Quote     `json:"quote,omitempty"`
 }
 
 type SendVideoResponse struct {
@@ -58,6 +59,7 @@ func (s *Whatsmiau) SendVideo(ctx context.Context, data *SendVideoRequest) (*Sen
 		MediaKey:      uploaded.MediaKey,
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 	if data.GifPlayback {
 		video.GifPlayback = proto.Bool(true)
@@ -77,6 +79,7 @@ type SendPtvRequest struct {
 	InstanceID string     `json:"instance_id"`
 	VideoURL   string     `json:"video_url"`
 	RemoteJID  *types.JID `json:"remote_jid"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendPtvResponse struct {
@@ -110,6 +113,7 @@ func (s *Whatsmiau) SendPtv(ctx context.Context, data *SendPtvRequest) (*SendPtv
 		FileEncSHA256:   uploaded.FileEncSHA256,
 		DirectPath:      proto.String(uploaded.DirectPath),
 		VideoSourceType: waE2E.VideoMessage_USER_VIDEO.Enum(),
+		ContextInfo:     buildContextInfo(data.Quote),
 	}
 
 	res, err := client.SendMessage(ctx, resolved, &waE2E.Message{PtvMessage: &video})
@@ -126,6 +130,7 @@ type SendStickerRequest struct {
 	InstanceID string     `json:"instance_id"`
 	StickerURL string     `json:"sticker_url"`
 	RemoteJID  *types.JID `json:"remote_jid"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendStickerResponse struct {
@@ -158,6 +163,7 @@ func (s *Whatsmiau) SendSticker(ctx context.Context, data *SendStickerRequest) (
 		MediaKey:      uploaded.MediaKey,
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	res, err := client.SendMessage(ctx, resolved, &waE2E.Message{StickerMessage: &sticker})
@@ -177,6 +183,7 @@ type SendLocationRequest struct {
 	Longitude  float64    `json:"longitude"`
 	Name       string     `json:"name"`
 	Address    string     `json:"address"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendLocationResponse struct {
@@ -194,6 +201,7 @@ func (s *Whatsmiau) SendLocation(ctx context.Context, data *SendLocationRequest)
 	loc := &waE2E.LocationMessage{
 		DegreesLatitude:  proto.Float64(data.Latitude),
 		DegreesLongitude: proto.Float64(data.Longitude),
+		ContextInfo:      buildContextInfo(data.Quote),
 	}
 	if data.Name != "" {
 		loc.Name = proto.String(data.Name)
@@ -225,6 +233,7 @@ type SendContactRequest struct {
 	InstanceID string            `json:"instance_id"`
 	RemoteJID  *types.JID        `json:"remote_jid"`
 	Contacts   []SendContactItem `json:"contacts"`
+	Quote      *Quote            `json:"quote,omitempty"`
 }
 
 type SendContactResponse struct {
@@ -252,7 +261,9 @@ func (s *Whatsmiau) SendContact(ctx context.Context, data *SendContactRequest) (
 
 	var msg *waE2E.Message
 	if len(data.Contacts) == 1 {
-		msg = &waE2E.Message{ContactMessage: contactToProto(data.Contacts[0])}
+		contact := contactToProto(data.Contacts[0])
+		contact.ContextInfo = buildContextInfo(data.Quote)
+		msg = &waE2E.Message{ContactMessage: contact}
 	} else {
 		contacts := make([]*waE2E.ContactMessage, 0, len(data.Contacts))
 		for _, c := range data.Contacts {
@@ -262,6 +273,7 @@ func (s *Whatsmiau) SendContact(ctx context.Context, data *SendContactRequest) (
 			ContactsArrayMessage: &waE2E.ContactsArrayMessage{
 				DisplayName: proto.String(data.Contacts[0].FullName),
 				Contacts:    contacts,
+				ContextInfo: buildContextInfo(data.Quote),
 			},
 		}
 	}
@@ -282,6 +294,7 @@ type SendPollRequest struct {
 	Name            string     `json:"name"`
 	SelectableCount int        `json:"selectable_count"`
 	Values          []string   `json:"values"`
+	Quote           *Quote     `json:"quote,omitempty"`
 }
 
 type SendPollResponse struct {
@@ -301,6 +314,7 @@ func (s *Whatsmiau) SendPoll(ctx context.Context, data *SendPollRequest) (*SendP
 	data.RemoteJID = &resolved
 
 	pollMsg := client.BuildPollCreation(data.Name, data.Values, data.SelectableCount)
+	pollMsg.PollCreationMessage.ContextInfo = buildContextInfo(data.Quote)
 
 	res, err := client.SendMessage(ctx, resolved, pollMsg)
 	if err != nil {

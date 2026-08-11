@@ -47,6 +47,12 @@ func (s *Message) sendVideo(ctx echo.Context, request dto.SendDocumentRequest, g
 		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
 	}
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	sendData := &whatsmiau.SendVideoRequest{
 		InstanceID:  request.InstanceID,
 		MediaURL:    request.Media,
@@ -54,6 +60,7 @@ func (s *Message) sendVideo(ctx echo.Context, request dto.SendDocumentRequest, g
 		RemoteJID:   jid,
 		Mimetype:    request.Mimetype,
 		GifPlayback: gif,
+		Quote:       quote,
 	}
 
 	c := ctx.Request().Context()
@@ -119,10 +126,17 @@ func (s *Message) SendPtv(ctx echo.Context) error {
 		time.Sleep(time.Millisecond * time.Duration(request.Delay))
 	}
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	res, err := s.whatsmiau.SendPtv(c, &whatsmiau.SendPtvRequest{
 		InstanceID: request.InstanceID,
 		VideoURL:   request.Video,
 		RemoteJID:  jid,
+		Quote:      quote,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendPtv failed", zap.Error(err))
@@ -176,10 +190,17 @@ func (s *Message) SendSticker(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	time.Sleep(time.Millisecond * time.Duration(request.Delay))
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	res, err := s.whatsmiau.SendSticker(c, &whatsmiau.SendStickerRequest{
 		InstanceID: request.InstanceID,
 		StickerURL: request.Sticker,
 		RemoteJID:  jid,
+		Quote:      quote,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendSticker failed", zap.Error(err))
@@ -233,6 +254,12 @@ func (s *Message) SendLocation(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	time.Sleep(time.Millisecond * time.Duration(request.Delay))
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	res, err := s.whatsmiau.SendLocation(c, &whatsmiau.SendLocationRequest{
 		InstanceID: request.InstanceID,
 		RemoteJID:  jid,
@@ -240,6 +267,7 @@ func (s *Message) SendLocation(ctx echo.Context) error {
 		Longitude:  request.Longitude,
 		Name:       request.Name,
 		Address:    request.Address,
+		Quote:      quote,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendLocation failed", zap.Error(err))
@@ -305,10 +333,17 @@ func (s *Message) SendContact(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	time.Sleep(time.Millisecond * time.Duration(request.Delay))
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	res, err := s.whatsmiau.SendContact(c, &whatsmiau.SendContactRequest{
 		InstanceID: request.InstanceID,
 		RemoteJID:  jid,
 		Contacts:   contacts,
+		Quote:      quote,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendContact failed", zap.Error(err))
@@ -367,12 +402,19 @@ func (s *Message) SendPoll(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	time.Sleep(time.Millisecond * time.Duration(request.Delay))
 
+	quote, err := buildQuote(request.Quoted)
+	if err != nil {
+		zap.L().Error("error converting quoted participant to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid quoted participant format")
+	}
+
 	res, err := s.whatsmiau.SendPoll(c, &whatsmiau.SendPollRequest{
 		InstanceID:      request.InstanceID,
 		RemoteJID:       jid,
 		Name:            request.Name,
 		SelectableCount: request.SelectableCount,
 		Values:          request.Values,
+		Quote:           quote,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendPoll failed", zap.Error(err))
