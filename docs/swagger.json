@@ -212,6 +212,9 @@
                 "remoteJID": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "syncFullHistory": {
                     "type": "boolean"
                 },
@@ -345,6 +348,9 @@
                 "remoteJID": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "syncFullHistory": {
                     "type": "boolean"
                 },
@@ -400,6 +406,9 @@
                 },
                 "remoteJID": {
                     "type": "string"
+                },
+                "saveMedia": {
+                    "type": "boolean"
                 },
                 "syncFullHistory": {
                     "type": "boolean"
@@ -664,6 +673,9 @@
                 "remoteJID": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "syncFullHistory": {
                     "type": "boolean"
                 },
@@ -788,7 +800,16 @@
         },
         "dto.QuotedKey": {
             "properties": {
+                "fromMe": {
+                    "type": "boolean"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "participant": {
+                    "type": "string"
+                },
+                "remoteJid": {
                     "type": "string"
                 }
             },
@@ -1957,6 +1978,9 @@
                 "proxyUsername": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "webhook": {
                     "properties": {
                         "base64": {
@@ -2020,6 +2044,9 @@
                 },
                 "remoteJID": {
                     "type": "string"
+                },
+                "saveMedia": {
+                    "type": "boolean"
                 },
                 "syncFullHistory": {
                     "type": "boolean"

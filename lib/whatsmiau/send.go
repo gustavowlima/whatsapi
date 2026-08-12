@@ -14,13 +14,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type Quote struct {
+	MessageID   string
+	Message     string
+	Participant *types.JID
+}
+
 type SendText struct {
-	Text           string     `json:"text"`
-	InstanceID     string     `json:"instance_id"`
-	RemoteJID      *types.JID `json:"remote_jid"`
-	QuoteMessageID string     `json:"quote_message_id"`
-	QuoteMessage   string     `json:"quote_message"`
-	Participant    *types.JID `json:"participant"`
+	Text       string     `json:"text"`
+	InstanceID string     `json:"instance_id"`
+	RemoteJID  *types.JID `json:"remote_jid"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendTextResponse struct {
@@ -41,32 +45,7 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
 	data.RemoteJID = &resolved
 
-	//rJid := data.RemoteJID.ToNonAD().String()
-	var extendedMessage *waE2E.ExtendedTextMessage
-	if len(data.QuoteMessage) > 0 && len(data.QuoteMessageID) > 0 {
-		extendedMessage = &waE2E.ExtendedTextMessage{
-			//ContextInfo: &waE2E.ContextInfo{ // TODO: implement quoted message
-			//	StanzaID:    &data.QuoteMessageID,
-			//	Participant: &rJid,
-			//	QuotedMessage: &waE2E.Message{
-			//		Conversation: &data.QuoteMessage,
-			//		ProtocolMessage: &waE2E.ProtocolMessage{
-			//			Key: &waCommon.MessageKey{
-			//				RemoteJID:   &rJid,
-			//				FromMe:      &[]bool{true}[0],
-			//				ID:          &data.QuoteMessageID,
-			//				Participant: nil,
-			//			},
-			//		},
-			//	},
-			//},
-		}
-	}
-
-	res, err := client.SendMessage(ctx, *data.RemoteJID, &waE2E.Message{
-		Conversation:        &data.Text,
-		ExtendedTextMessage: extendedMessage,
-	})
+	res, err := client.SendMessage(ctx, *data.RemoteJID, buildSendTextMessage(data))
 	if err != nil {
 		return nil, err
 	}
@@ -77,13 +56,45 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 	}, nil
 }
 
+func buildContextInfo(q *Quote) *waE2E.ContextInfo {
+	if q == nil || len(q.MessageID) == 0 {
+		return nil
+	}
+
+	ci := &waE2E.ContextInfo{
+		StanzaID: proto.String(q.MessageID),
+	}
+	if q.Participant != nil {
+		ci.Participant = proto.String(q.Participant.String())
+	}
+	if len(q.Message) > 0 {
+		ci.QuotedMessage = &waE2E.Message{
+			Conversation: proto.String(q.Message),
+		}
+	}
+	return ci
+}
+
+func buildSendTextMessage(data *SendText) *waE2E.Message {
+	if data.Quote == nil || len(data.Quote.MessageID) == 0 {
+		return &waE2E.Message{
+			Conversation: proto.String(data.Text),
+		}
+	}
+
+	return &waE2E.Message{
+		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
+			Text:        proto.String(data.Text),
+			ContextInfo: buildContextInfo(data.Quote),
+		},
+	}
+}
+
 type SendAudioRequest struct {
-	AudioURL       string     `json:"text"`
-	InstanceID     string     `json:"instance_id"`
-	RemoteJID      *types.JID `json:"remote_jid"`
-	QuoteMessageID string     `json:"quote_message_id"`
-	QuoteMessage   string     `json:"quote_message"`
-	Participant    *types.JID `json:"participant"`
+	AudioURL   string     `json:"text"`
+	InstanceID string     `json:"instance_id"`
+	RemoteJID  *types.JID `json:"remote_jid"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendAudioResponse struct {
@@ -127,6 +138,7 @@ func (s *Whatsmiau) SendAudio(ctx context.Context, data *SendAudioRequest) (*Sen
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		Waveform:      waveForm,
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
@@ -152,6 +164,7 @@ type SendDocumentRequest struct {
 	FileName   string     `json:"file_name"`
 	RemoteJID  *types.JID `json:"remote_jid"`
 	Mimetype   string     `json:"mimetype"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 
 type SendDocumentResponse struct {
@@ -189,6 +202,7 @@ func (s *Whatsmiau) SendDocument(ctx context.Context, data *SendDocumentRequest)
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		Caption:       proto.String(data.Caption),
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
@@ -213,6 +227,7 @@ type SendImageRequest struct {
 	Caption    string     `json:"caption"`
 	RemoteJID  *types.JID `json:"remote_jid"`
 	Mimetype   string     `json:"mimetype"`
+	Quote      *Quote     `json:"quote,omitempty"`
 }
 type SendImageResponse struct {
 	ID        string    `json:"id"`
@@ -252,6 +267,7 @@ func (s *Whatsmiau) SendImage(ctx context.Context, data *SendImageRequest) (*Sen
 		MediaKey:      uploaded.MediaKey,
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
+		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)

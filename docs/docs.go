@@ -7339,6 +7339,9 @@ const docTemplate = `{
                 "remoteJID": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "syncFullHistory": {
                     "type": "boolean"
                 },
@@ -7472,6 +7475,9 @@ const docTemplate = `{
                 "remoteJID": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "syncFullHistory": {
                     "type": "boolean"
                 },
@@ -7527,6 +7533,9 @@ const docTemplate = `{
                 },
                 "remoteJID": {
                     "type": "string"
+                },
+                "saveMedia": {
+                    "type": "boolean"
                 },
                 "syncFullHistory": {
                     "type": "boolean"
@@ -7791,6 +7800,9 @@ const docTemplate = `{
                 "remoteJID": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "syncFullHistory": {
                     "type": "boolean"
                 },
@@ -7915,7 +7927,16 @@ const docTemplate = `{
         "dto.QuotedKey": {
             "type": "object",
             "properties": {
+                "fromMe": {
+                    "type": "boolean"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "participant": {
+                    "type": "string"
+                },
+                "remoteJid": {
                     "type": "string"
                 }
             }
@@ -9084,6 +9105,9 @@ const docTemplate = `{
                 "proxyUsername": {
                     "type": "string"
                 },
+                "saveMedia": {
+                    "type": "boolean"
+                },
                 "webhook": {
                     "type": "object",
                     "properties": {
@@ -9147,6 +9171,9 @@ const docTemplate = `{
                 },
                 "remoteJID": {
                     "type": "string"
+                },
+                "saveMedia": {
+                    "type": "boolean"
                 },
                 "syncFullHistory": {
                     "type": "boolean"
