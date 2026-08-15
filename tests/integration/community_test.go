@@ -14,6 +14,7 @@ import (
 // criação, subgrupos, link/unlink, configurações de join e participantes.
 func TestCommunityFlow(t *testing.T) {
 	var communityJID string
+	var announcementJID string
 	var subGroupJID string
 
 	t.Run("CreateCommunity", func(t *testing.T) {
@@ -61,9 +62,77 @@ func TestCommunityFlow(t *testing.T) {
 		defer drainClose(resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var groups []map[string]any
+		var groups []struct {
+			ID                string `json:"id"`
+			IsDefaultSubGroup bool   `json:"isDefaultSubGroup"`
+		}
 		mustDecode(t, resp, &groups)
 		require.NotEmpty(t, groups, "comunidade deve ter ao menos o grupo de anúncios")
+		for _, group := range groups {
+			if group.IsDefaultSubGroup {
+				announcementJID = group.ID
+				break
+			}
+		}
+		require.NotEmpty(t, announcementJID, "comunidade deve informar o JID do grupo de anúncios")
+	})
+
+	readGroupDescription := func(t *testing.T, groupJID string) string {
+		t.Helper()
+		resp := do(t, http.MethodGet, groupURLQuery(t, "findGroupInfos", "groupJid="+groupJID), nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		var info struct {
+			Description string `json:"desc"`
+		}
+		mustDecode(t, resp, &info)
+		return info.Description
+	}
+
+	t.Run("UpdateDescriptionViaCommunityParent", func(t *testing.T) {
+		const description = "Descrição atualizada diretamente no parent"
+		resp := do(t, http.MethodPost, groupURL(t, "updateGroupDescription"), map[string]any{
+			"groupJid":    communityJID,
+			"description": description,
+		})
+		defer drainClose(resp)
+		require.Equal(t, http.StatusCreated, resp.StatusCode)
+		assert.Equal(t, description, readGroupDescription(t, communityJID))
+	})
+
+	cooldown()
+
+	t.Run("UpdateDescriptionViaAnnouncementResolvesParent", func(t *testing.T) {
+		if announcementJID == "" {
+			t.Skip("SubGroups não retornou o grupo de anúncios")
+		}
+		const description = "Descrição atualizada usando o JID de avisos"
+		announcementDescription := readGroupDescription(t, announcementJID)
+
+		resp := do(t, http.MethodPost, groupURL(t, "updateGroupDescription"), map[string]any{
+			"groupJid":    announcementJID,
+			"description": description,
+		})
+		defer drainClose(resp)
+		require.Equal(t, http.StatusCreated, resp.StatusCode)
+		assert.Equal(t, description, readGroupDescription(t, communityJID))
+		assert.Equal(t, announcementDescription, readGroupDescription(t, announcementJID),
+			"descrição própria do grupo de avisos não deve ser alterada")
+	})
+
+	cooldown()
+
+	t.Run("UpdateDescriptionAgainViaAnnouncement", func(t *testing.T) {
+		if announcementJID == "" {
+			t.Skip("SubGroups não retornou o grupo de anúncios")
+		}
+		const description = "Segunda descrição atualizada usando o JID de avisos"
+		resp := do(t, http.MethodPost, groupURL(t, "updateGroupDescription"), map[string]any{
+			"groupJid":    announcementJID,
+			"description": description,
+		})
+		defer drainClose(resp)
+		require.Equal(t, http.StatusCreated, resp.StatusCode)
+		assert.Equal(t, description, readGroupDescription(t, communityJID))
 	})
 
 	t.Run("LinkedGroupsParticipants", func(t *testing.T) {
@@ -157,7 +226,6 @@ func TestCommunityFlow(t *testing.T) {
 			"linkGroup deve retornar 200 ou 403, got %d", resp.StatusCode)
 	})
 }
-
 
 // TestCommunityValidation cobre rejeições esperadas nos endpoints de comunidade.
 func TestCommunityValidation(t *testing.T) {
