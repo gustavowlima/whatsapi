@@ -7,11 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/verbeux-ai/whatsmiau/env"
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
-	"go.mau.fi/whatsmeow/proto/waCommon"
-	"go.mau.fi/whatsmeow/proto/waConsumerApplication"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.uber.org/zap"
@@ -56,29 +53,9 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 		return nil, err
 	}
 
-	// The FB (v3) message path is experimental and not reliably delivered to
-	// all recipients, so it is off by default (EVERYONE_FB_ENABLED). The
-	// classic E2E path below with ContextInfo.NonJIDMentions=1 is what
-	// mautrix-whatsapp uses in production and reliably triggers the everyone
-	// mention notifications. The message body must contain the literal "@all"
-	// for the client to render the highlight.
-	if env.Env.EveryOneFBEnabled && everyone {
-		if fbMsg := buildFBEveryoneMessage(data.Text); fbMsg != nil {
-			fbCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			fbRes, fbErr := client.SendFBMessage(fbCtx, resolved, fbMsg, nil)
-			cancel()
-			if fbErr == nil {
-				zap.L().Info("sent text via FB everyOne mention", zap.String("literal", everyoneMentionLiteral))
-				return &SendTextResponse{
-					ID:        fbRes.ID,
-					CreatedAt: fbRes.Timestamp,
-				}, nil
-			}
-			zap.L().Warn("FB everyOne mention failed, falling back to classic E2E",
-				zap.String("literal", everyoneMentionLiteral), zap.Error(fbErr))
-		}
-	}
-
+	// mentionsEveryOne uses the classic E2E path with ContextInfo.NonJIDMentions=1
+	// (same approach mautrix-whatsapp uses for @room). The message body must
+	// contain the literal "@all" for the client to render the highlight.
 	res, err := client.SendMessage(ctx, *data.RemoteJID, buildSendTextMessage(data, mentioned, everyone))
 	if err != nil {
 		return nil, err
@@ -88,44 +65,6 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 		ID:        res.ID,
 		CreatedAt: res.Timestamp,
 	}, nil
-}
-
-// everyoneMentionLiteral is the canonical literal WhatsApp expects in the
-// message body to render the "mention everyone" highlight. The official client
-// sends "@all" on the wire and localizes the display client-side (e.g.
-// "@everyone", "@tutti", "@todos"), so the message body must contain "@all".
-const everyoneMentionLiteral = "@all"
-
-// buildFBEveryoneMessage builds an FB (v3) text message that marks the
-// canonical "@all" literal as the "@everyone" mention via a Command pointing at
-// its offset/length in the text. The WhatsApp client uses that to render the
-// mention highlighted (blue) and open the "mention all members" modal on tap.
-// Returns nil when "@all" is not present in the text.
-func buildFBEveryoneMessage(text string) *waConsumerApplication.ConsumerApplication {
-	idx := strings.Index(text, everyoneMentionLiteral)
-	if idx < 0 {
-		return nil
-	}
-	return &waConsumerApplication.ConsumerApplication{
-		Payload: &waConsumerApplication.ConsumerApplication_Payload{
-			Payload: &waConsumerApplication.ConsumerApplication_Payload_Content{
-				Content: &waConsumerApplication.ConsumerApplication_Content{
-					Content: &waConsumerApplication.ConsumerApplication_Content_MessageText{
-						MessageText: &waCommon.MessageText{
-							Text: proto.String(text),
-							Commands: []*waCommon.Command{
-								{
-									CommandType: waCommon.Command_EVERYONE.Enum(),
-									Offset:      proto.Uint32(uint32(idx)),
-									Length:      proto.Uint32(uint32(len(everyoneMentionLiteral))),
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
 }
 
 func buildContextInfo(q *Quote, mentionedJID []string, everyone bool) *waE2E.ContextInfo {

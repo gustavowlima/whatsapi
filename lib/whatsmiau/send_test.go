@@ -3,7 +3,6 @@ package whatsmiau
 import (
 	"testing"
 
-	"go.mau.fi/whatsmeow/proto/waCommon"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"google.golang.org/protobuf/proto"
@@ -301,7 +300,7 @@ func TestResolveMentionsEveryOneWithIndividualMentions(t *testing.T) {
 }
 
 func TestBuildSendTextMessageEveryone(t *testing.T) {
-	msg := buildSendTextMessage(&SendText{Text: "@everyone test"}, nil, true)
+	msg := buildSendTextMessage(&SendText{Text: "@all test"}, nil, true)
 
 	if msg.Conversation != nil {
 		t.Fatalf("expected no Conversation field when mentioning everyone, got %v", msg.Conversation)
@@ -310,8 +309,8 @@ func TestBuildSendTextMessageEveryone(t *testing.T) {
 	if ext == nil {
 		t.Fatal("expected ExtendedTextMessage when mentioning everyone")
 	}
-	if ext.GetText() != "@everyone test" {
-		t.Fatalf("expected text=%q, got %q", "@everyone test", ext.GetText())
+	if ext.GetText() != "@all test" {
+		t.Fatalf("expected text=%q, got %q", "@all test", ext.GetText())
 	}
 	ci := ext.ContextInfo
 	if ci == nil {
@@ -335,47 +334,5 @@ func TestBuildContextInfoEveryoneWithQuote(t *testing.T) {
 	}
 	if ci.GetNonJIDMentions() != 1 {
 		t.Fatalf("expected NonJIDMentions=1, got %d", ci.GetNonJIDMentions())
-	}
-}
-
-func TestBuildFBEveryoneMessage(t *testing.T) {
-	msg := buildFBEveryoneMessage("bom dia @all")
-	if msg == nil {
-		t.Fatal("expected FB message when @all is present in text")
-	}
-
-	content := msg.GetPayload().GetContent()
-	if content == nil {
-		t.Fatal("expected content in FB payload")
-	}
-	textMsg := content.GetMessageText()
-	if textMsg == nil {
-		t.Fatal("expected messageText in FB content")
-	}
-	if textMsg.GetText() != "bom dia @all" {
-		t.Fatalf("expected text=%q, got %q", "bom dia @all", textMsg.GetText())
-	}
-	commands := textMsg.GetCommands()
-	if len(commands) != 1 {
-		t.Fatalf("expected 1 command, got %d", len(commands))
-	}
-	cmd := commands[0]
-	if cmd.GetCommandType() != waCommon.Command_EVERYONE {
-		t.Fatalf("expected EVERYONE command, got %v", cmd.GetCommandType())
-	}
-	if cmd.GetOffset() != 8 {
-		t.Fatalf("expected offset=8, got %d", cmd.GetOffset())
-	}
-	if cmd.GetLength() != 4 {
-		t.Fatalf("expected length=4, got %d", cmd.GetLength())
-	}
-	if _, err := proto.Marshal(msg); err != nil {
-		t.Fatalf("expected FB message to marshal, got %v", err)
-	}
-}
-
-func TestBuildFBEveryoneMessageAllMissing(t *testing.T) {
-	if msg := buildFBEveryoneMessage("bom dia"); msg != nil {
-		t.Fatalf("expected nil when @all is not in the text, got %v", msg)
 	}
 }
