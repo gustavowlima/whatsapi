@@ -18,9 +18,10 @@ func TestCommunityFlow(t *testing.T) {
 	var subGroupJID string
 
 	t.Run("CreateCommunity", func(t *testing.T) {
+		const initialDescription = "Comunidade de testes automatizados"
 		resp := do(t, http.MethodPost, communityURL(t, "create"), map[string]any{
 			"subject":     "WhatsMiau Community Test",
-			"description": "Comunidade de testes automatizados",
+			"description": initialDescription,
 		})
 		defer drainClose(resp)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -33,6 +34,7 @@ func TestCommunityFlow(t *testing.T) {
 
 		isCommunity, _ := body["isCommunity"].(bool)
 		assert.True(t, isCommunity, "isCommunity deve ser true para comunidades")
+		assert.Equal(t, initialDescription, body["desc"], "descrição deve ser definida durante a criação")
 	})
 
 	if communityJID == "" {
