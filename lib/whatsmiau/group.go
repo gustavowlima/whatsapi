@@ -225,7 +225,7 @@ func (s *Whatsmiau) SetGroupDescription(ctx context.Context, req *SetGroupDescri
 	if !ok {
 		return whatsmeow.ErrClientIsNil
 	}
-	return client.SetGroupTopic(ctx, *req.GroupJID, "", "", req.Description)
+	return client.SetGroupDescription(ctx, *req.GroupJID, req.Description)
 }
 
 // ---------- FindGroup ----------
