@@ -7,10 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/verbeux-ai/whatsmiau/env"
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
+	"go.mau.fi/whatsmeow/proto/waCommon"
+	"go.mau.fi/whatsmeow/proto/waConsumerApplication"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -21,10 +25,12 @@ type Quote struct {
 }
 
 type SendText struct {
-	Text       string     `json:"text"`
-	InstanceID string     `json:"instance_id"`
-	RemoteJID  *types.JID `json:"remote_jid"`
-	Quote      *Quote     `json:"quote,omitempty"`
+	Text             string     `json:"text"`
+	InstanceID       string     `json:"instance_id"`
+	RemoteJID        *types.JID `json:"remote_jid"`
+	Quote            *Quote     `json:"quote,omitempty"`
+	MentionsEveryOne bool       `json:"mentionsEveryOne,omitempty"`
+	Mentioned        []string   `json:"mentioned,omitempty"`
 }
 
 type SendTextResponse struct {
@@ -45,7 +51,35 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
 	data.RemoteJID = &resolved
 
-	res, err := client.SendMessage(ctx, *data.RemoteJID, buildSendTextMessage(data))
+	mentioned, everyone, err := s.resolveMentions(resolved, data.MentionsEveryOne, data.Mentioned)
+	if err != nil {
+		return nil, err
+	}
+
+	// The FB (v3) message path is experimental and not reliably delivered to
+	// all recipients, so it is off by default (EVERYONE_FB_ENABLED). The
+	// classic E2E path below with ContextInfo.NonJIDMentions=1 is what
+	// mautrix-whatsapp uses in production and reliably triggers the everyone
+	// mention notifications. The message body must contain the literal "@all"
+	// for the client to render the highlight.
+	if env.Env.EveryOneFBEnabled && everyone {
+		if fbMsg := buildFBEveryoneMessage(data.Text); fbMsg != nil {
+			fbCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			fbRes, fbErr := client.SendFBMessage(fbCtx, resolved, fbMsg, nil)
+			cancel()
+			if fbErr == nil {
+				zap.L().Info("sent text via FB everyOne mention", zap.String("literal", everyoneMentionLiteral))
+				return &SendTextResponse{
+					ID:        fbRes.ID,
+					CreatedAt: fbRes.Timestamp,
+				}, nil
+			}
+			zap.L().Warn("FB everyOne mention failed, falling back to classic E2E",
+				zap.String("literal", everyoneMentionLiteral), zap.Error(fbErr))
+		}
+	}
+
+	res, err := client.SendMessage(ctx, *data.RemoteJID, buildSendTextMessage(data, mentioned, everyone))
 	if err != nil {
 		return nil, err
 	}
@@ -56,27 +90,77 @@ func (s *Whatsmiau) SendText(ctx context.Context, data *SendText) (*SendTextResp
 	}, nil
 }
 
-func buildContextInfo(q *Quote) *waE2E.ContextInfo {
-	if q == nil || len(q.MessageID) == 0 {
+// everyoneMentionLiteral is the canonical literal WhatsApp expects in the
+// message body to render the "mention everyone" highlight. The official client
+// sends "@all" on the wire and localizes the display client-side (e.g.
+// "@everyone", "@tutti", "@todos"), so the message body must contain "@all".
+const everyoneMentionLiteral = "@all"
+
+// buildFBEveryoneMessage builds an FB (v3) text message that marks the
+// canonical "@all" literal as the "@everyone" mention via a Command pointing at
+// its offset/length in the text. The WhatsApp client uses that to render the
+// mention highlighted (blue) and open the "mention all members" modal on tap.
+// Returns nil when "@all" is not present in the text.
+func buildFBEveryoneMessage(text string) *waConsumerApplication.ConsumerApplication {
+	idx := strings.Index(text, everyoneMentionLiteral)
+	if idx < 0 {
 		return nil
 	}
+	return &waConsumerApplication.ConsumerApplication{
+		Payload: &waConsumerApplication.ConsumerApplication_Payload{
+			Payload: &waConsumerApplication.ConsumerApplication_Payload_Content{
+				Content: &waConsumerApplication.ConsumerApplication_Content{
+					Content: &waConsumerApplication.ConsumerApplication_Content_MessageText{
+						MessageText: &waCommon.MessageText{
+							Text: proto.String(text),
+							Commands: []*waCommon.Command{
+								{
+									CommandType: waCommon.Command_EVERYONE.Enum(),
+									Offset:      proto.Uint32(uint32(idx)),
+									Length:      proto.Uint32(uint32(len(everyoneMentionLiteral))),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
 
-	ci := &waE2E.ContextInfo{
-		StanzaID: proto.String(q.MessageID),
-	}
-	if q.Participant != nil {
-		ci.Participant = proto.String(q.Participant.String())
-	}
-	if len(q.Message) > 0 {
-		ci.QuotedMessage = &waE2E.Message{
-			Conversation: proto.String(q.Message),
+func buildContextInfo(q *Quote, mentionedJID []string, everyone bool) *waE2E.ContextInfo {
+	var ci *waE2E.ContextInfo
+	if q != nil && len(q.MessageID) > 0 {
+		ci = &waE2E.ContextInfo{
+			StanzaID: proto.String(q.MessageID),
 		}
+		if q.Participant != nil {
+			ci.Participant = proto.String(q.Participant.String())
+		}
+		if len(q.Message) > 0 {
+			ci.QuotedMessage = &waE2E.Message{
+				Conversation: proto.String(q.Message),
+			}
+		}
+	}
+	if everyone {
+		if ci == nil {
+			ci = &waE2E.ContextInfo{}
+		}
+		ci.NonJIDMentions = proto.Uint32(1)
+	}
+	if len(mentionedJID) > 0 {
+		if ci == nil {
+			ci = &waE2E.ContextInfo{}
+		}
+		ci.MentionedJID = mentionedJID
 	}
 	return ci
 }
 
-func buildSendTextMessage(data *SendText) *waE2E.Message {
-	if data.Quote == nil || len(data.Quote.MessageID) == 0 {
+func buildSendTextMessage(data *SendText, mentionedJID []string, everyone bool) *waE2E.Message {
+	ci := buildContextInfo(data.Quote, mentionedJID, everyone)
+	if ci == nil {
 		return &waE2E.Message{
 			Conversation: proto.String(data.Text),
 		}
@@ -85,16 +169,53 @@ func buildSendTextMessage(data *SendText) *waE2E.Message {
 	return &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text:        proto.String(data.Text),
-			ContextInfo: buildContextInfo(data.Quote),
+			ContextInfo: ci,
 		},
 	}
 }
 
+// resolveMentions builds the mention metadata for a message. mentionsEveryOne
+// only applies to group chats and uses the native "@everyone" mechanism
+// (ContextInfo.NonJIDMentions = 1), the same approach mautrix-whatsapp uses
+// for @room bridging. mentioned is a list of phone numbers (or full JIDs) to
+// mention individually via ContextInfo.MentionedJID. The message text is left
+// untouched — mentions are delivered via ContextInfo.
+func (s *Whatsmiau) resolveMentions(remoteJID types.JID, mentionsEveryOne bool, mentioned []string) ([]string, bool, error) {
+	var jids []string
+	if len(mentioned) > 0 {
+		jids = make([]string, 0, len(mentioned))
+		for _, m := range mentioned {
+			if !strings.Contains(m, "@") {
+				m += "@" + types.DefaultUserServer
+			}
+			jid, err := types.ParseJID(m)
+			if err != nil {
+				return nil, false, fmt.Errorf("invalid mentioned jid %q: %w", m, err)
+			}
+			jids = append(jids, jid.String())
+		}
+		zap.L().Info("mentioned resolved", zap.String("remote", remoteJID.String()), zap.Strings("mentionedJid", jids))
+	}
+
+	// mentionsEveryOne only applies to group chats: it uses the native
+	// "@everyone" mechanism (ContextInfo.NonJIDMentions = 1), the same approach
+	// mautrix-whatsapp uses for @room bridging. For any other destination it is
+	// ignored (there is no group to mention everyone in). mentioned is processed
+	// independently and can be combined with mentionsEveryOne.
+	everyone := mentionsEveryOne && remoteJID.Server == types.GroupServer
+	if everyone {
+		zap.L().Info("mentionsEveryOne resolved", zap.String("group", remoteJID.String()), zap.Bool("nonJidMentions", true))
+	}
+	return jids, everyone, nil
+}
+
 type SendAudioRequest struct {
-	AudioURL   string     `json:"text"`
-	InstanceID string     `json:"instance_id"`
-	RemoteJID  *types.JID `json:"remote_jid"`
-	Quote      *Quote     `json:"quote,omitempty"`
+	AudioURL         string     `json:"text"`
+	InstanceID       string     `json:"instance_id"`
+	RemoteJID        *types.JID `json:"remote_jid"`
+	Quote            *Quote     `json:"quote,omitempty"`
+	MentionsEveryOne bool       `json:"mentionsEveryOne,omitempty"`
+	Mentioned        []string   `json:"mentioned,omitempty"`
 }
 
 type SendAudioResponse struct {
@@ -138,11 +259,16 @@ func (s *Whatsmiau) SendAudio(ctx context.Context, data *SendAudioRequest) (*Sen
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		Waveform:      waveForm,
-		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
 	data.RemoteJID = &resolved
+
+	mentioned, everyone, err := s.resolveMentions(resolved, data.MentionsEveryOne, data.Mentioned)
+	if err != nil {
+		return nil, err
+	}
+	audio.ContextInfo = buildContextInfo(data.Quote, mentioned, everyone)
 
 	res, err := client.SendMessage(ctx, *data.RemoteJID, &waE2E.Message{
 		AudioMessage: &audio,
@@ -158,13 +284,15 @@ func (s *Whatsmiau) SendAudio(ctx context.Context, data *SendAudioRequest) (*Sen
 }
 
 type SendDocumentRequest struct {
-	InstanceID string     `json:"instance_id"`
-	MediaURL   string     `json:"media_url"`
-	Caption    string     `json:"caption"`
-	FileName   string     `json:"file_name"`
-	RemoteJID  *types.JID `json:"remote_jid"`
-	Mimetype   string     `json:"mimetype"`
-	Quote      *Quote     `json:"quote,omitempty"`
+	InstanceID       string     `json:"instance_id"`
+	MediaURL         string     `json:"media_url"`
+	Caption          string     `json:"caption"`
+	FileName         string     `json:"file_name"`
+	RemoteJID        *types.JID `json:"remote_jid"`
+	Mimetype         string     `json:"mimetype"`
+	Quote            *Quote     `json:"quote,omitempty"`
+	MentionsEveryOne bool       `json:"mentionsEveryOne,omitempty"`
+	Mentioned        []string   `json:"mentioned,omitempty"`
 }
 
 type SendDocumentResponse struct {
@@ -202,11 +330,16 @@ func (s *Whatsmiau) SendDocument(ctx context.Context, data *SendDocumentRequest)
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		Caption:       proto.String(data.Caption),
-		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
 	data.RemoteJID = &resolved
+
+	mentioned, everyone, err := s.resolveMentions(resolved, data.MentionsEveryOne, data.Mentioned)
+	if err != nil {
+		return nil, err
+	}
+	doc.ContextInfo = buildContextInfo(data.Quote, mentioned, everyone)
 
 	res, err := client.SendMessage(ctx, *data.RemoteJID, &waE2E.Message{
 		DocumentMessage: &doc,
@@ -222,12 +355,14 @@ func (s *Whatsmiau) SendDocument(ctx context.Context, data *SendDocumentRequest)
 }
 
 type SendImageRequest struct {
-	InstanceID string     `json:"instance_id"`
-	MediaURL   string     `json:"media_url"`
-	Caption    string     `json:"caption"`
-	RemoteJID  *types.JID `json:"remote_jid"`
-	Mimetype   string     `json:"mimetype"`
-	Quote      *Quote     `json:"quote,omitempty"`
+	InstanceID       string     `json:"instance_id"`
+	MediaURL         string     `json:"media_url"`
+	Caption          string     `json:"caption"`
+	RemoteJID        *types.JID `json:"remote_jid"`
+	Mimetype         string     `json:"mimetype"`
+	Quote            *Quote     `json:"quote,omitempty"`
+	MentionsEveryOne bool       `json:"mentionsEveryOne,omitempty"`
+	Mentioned        []string   `json:"mentioned,omitempty"`
 }
 type SendImageResponse struct {
 	ID        string    `json:"id"`
@@ -267,11 +402,16 @@ func (s *Whatsmiau) SendImage(ctx context.Context, data *SendImageRequest) (*Sen
 		MediaKey:      uploaded.MediaKey,
 		FileEncSHA256: uploaded.FileEncSHA256,
 		DirectPath:    proto.String(uploaded.DirectPath),
-		ContextInfo:   buildContextInfo(data.Quote),
 	}
 
 	resolved := s.resolveJID(ctx, client, *data.RemoteJID)
 	data.RemoteJID = &resolved
+
+	mentioned, everyone, err := s.resolveMentions(resolved, data.MentionsEveryOne, data.Mentioned)
+	if err != nil {
+		return nil, err
+	}
+	doc.ContextInfo = buildContextInfo(data.Quote, mentioned, everyone)
 
 	res, err := client.SendMessage(ctx, *data.RemoteJID, &waE2E.Message{
 		ImageMessage: &doc,
