@@ -54,13 +54,15 @@ func (s *Message) sendVideo(ctx echo.Context, request dto.SendDocumentRequest, g
 	}
 
 	sendData := &whatsmiau.SendVideoRequest{
-		InstanceID:  request.InstanceID,
-		MediaURL:    request.Media,
-		Caption:     request.Caption,
-		RemoteJID:   jid,
-		Mimetype:    request.Mimetype,
-		GifPlayback: gif,
-		Quote:       quote,
+		InstanceID:       request.InstanceID,
+		MediaURL:         request.Media,
+		Caption:          request.Caption,
+		RemoteJID:        jid,
+		Mimetype:         request.Mimetype,
+		GifPlayback:      gif,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	}
 
 	c := ctx.Request().Context()
@@ -133,10 +135,12 @@ func (s *Message) SendPtv(ctx echo.Context) error {
 	}
 
 	res, err := s.whatsmiau.SendPtv(c, &whatsmiau.SendPtvRequest{
-		InstanceID: request.InstanceID,
-		VideoURL:   request.Video,
-		RemoteJID:  jid,
-		Quote:      quote,
+		InstanceID:       request.InstanceID,
+		VideoURL:         request.Video,
+		RemoteJID:        jid,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendPtv failed", zap.Error(err))
@@ -197,10 +201,12 @@ func (s *Message) SendSticker(ctx echo.Context) error {
 	}
 
 	res, err := s.whatsmiau.SendSticker(c, &whatsmiau.SendStickerRequest{
-		InstanceID: request.InstanceID,
-		StickerURL: request.Sticker,
-		RemoteJID:  jid,
-		Quote:      quote,
+		InstanceID:       request.InstanceID,
+		StickerURL:       request.Sticker,
+		RemoteJID:        jid,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendSticker failed", zap.Error(err))
@@ -261,13 +267,15 @@ func (s *Message) SendLocation(ctx echo.Context) error {
 	}
 
 	res, err := s.whatsmiau.SendLocation(c, &whatsmiau.SendLocationRequest{
-		InstanceID: request.InstanceID,
-		RemoteJID:  jid,
-		Latitude:   request.Latitude,
-		Longitude:  request.Longitude,
-		Name:       request.Name,
-		Address:    request.Address,
-		Quote:      quote,
+		InstanceID:       request.InstanceID,
+		RemoteJID:        jid,
+		Latitude:         request.Latitude,
+		Longitude:        request.Longitude,
+		Name:             request.Name,
+		Address:          request.Address,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendLocation failed", zap.Error(err))
@@ -340,10 +348,12 @@ func (s *Message) SendContact(ctx echo.Context) error {
 	}
 
 	res, err := s.whatsmiau.SendContact(c, &whatsmiau.SendContactRequest{
-		InstanceID: request.InstanceID,
-		RemoteJID:  jid,
-		Contacts:   contacts,
-		Quote:      quote,
+		InstanceID:       request.InstanceID,
+		RemoteJID:        jid,
+		Contacts:         contacts,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendContact failed", zap.Error(err))
@@ -409,12 +419,14 @@ func (s *Message) SendPoll(ctx echo.Context) error {
 	}
 
 	res, err := s.whatsmiau.SendPoll(c, &whatsmiau.SendPollRequest{
-		InstanceID:      request.InstanceID,
-		RemoteJID:       jid,
-		Name:            request.Name,
-		SelectableCount: request.SelectableCount,
-		Values:          request.Values,
-		Quote:           quote,
+		InstanceID:       request.InstanceID,
+		RemoteJID:        jid,
+		Name:             request.Name,
+		SelectableCount:  request.SelectableCount,
+		Values:           request.Values,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	})
 	if err != nil {
 		zap.L().Error("Whatsmiau.SendPoll failed", zap.Error(err))

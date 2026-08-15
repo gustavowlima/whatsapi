@@ -69,10 +69,12 @@ func (s *Message) SendText(ctx echo.Context) error {
 	}
 
 	sendText := &whatsmiau.SendText{
-		Text:       request.Text,
-		InstanceID: request.InstanceID,
-		RemoteJID:  jid,
-		Quote:      quote,
+		Text:             request.Text,
+		InstanceID:       request.InstanceID,
+		RemoteJID:        jid,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	}
 
 	c := ctx.Request().Context()
@@ -146,10 +148,12 @@ func (s *Message) SendAudio(ctx echo.Context) error {
 	}
 
 	sendText := &whatsmiau.SendAudioRequest{
-		AudioURL:   request.Audio,
-		InstanceID: request.InstanceID,
-		RemoteJID:  jid,
-		Quote:      quote,
+		AudioURL:         request.Audio,
+		InstanceID:       request.InstanceID,
+		RemoteJID:        jid,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	}
 
 	c := ctx.Request().Context()
@@ -259,13 +263,15 @@ func (s *Message) sendDocument(ctx echo.Context, request dto.SendDocumentRequest
 	}
 
 	sendData := &whatsmiau.SendDocumentRequest{
-		InstanceID: request.InstanceID,
-		MediaURL:   request.Media,
-		Caption:    request.Caption,
-		FileName:   request.FileName,
-		RemoteJID:  jid,
-		Mimetype:   request.Mimetype,
-		Quote:      quote,
+		InstanceID:       request.InstanceID,
+		MediaURL:         request.Media,
+		Caption:          request.Caption,
+		FileName:         request.FileName,
+		RemoteJID:        jid,
+		Mimetype:         request.Mimetype,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	}
 
 	c := ctx.Request().Context()
@@ -331,12 +337,14 @@ func (s *Message) sendImage(ctx echo.Context, request dto.SendDocumentRequest) e
 	}
 
 	sendData := &whatsmiau.SendImageRequest{
-		InstanceID: request.InstanceID,
-		MediaURL:   request.Media,
-		Caption:    request.Caption,
-		RemoteJID:  jid,
-		Mimetype:   request.Mimetype,
-		Quote:      quote,
+		InstanceID:       request.InstanceID,
+		MediaURL:         request.Media,
+		Caption:          request.Caption,
+		RemoteJID:        jid,
+		Mimetype:         request.Mimetype,
+		Quote:            quote,
+		MentionsEveryOne: request.MentionsEveryOne,
+		Mentioned:        request.Mentioned,
 	}
 
 	c := ctx.Request().Context()
