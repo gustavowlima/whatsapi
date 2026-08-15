@@ -585,7 +585,13 @@ func (s *Group) UpdateParticipant(ctx echo.Context) error {
 		Participants: request.Participants,
 	})
 	if err != nil {
-		zap.L().Error("Whatsmiau.UpdateGroupParticipant failed", zap.Error(err))
+		zap.L().Error("Whatsmiau.UpdateGroupParticipant failed",
+			zap.Error(err),
+			zap.String("instance", request.InstanceID),
+			zap.String("group_jid", request.GroupJid),
+			zap.String("action", request.Action),
+			zap.Int("participant_count", len(request.Participants)),
+		)
 		code, msg := mapGroupError(err)
 		return utils.HTTPFail(ctx, code, err, msg)
 	}
