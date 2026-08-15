@@ -49,6 +49,25 @@ type Whatsmiau struct {
 var instance *Whatsmiau
 var mu = &sync.Mutex{}
 
+const loadMiauConnectConcurrency = 10
+
+func runLoadMiauTasks[T any](items []T, task func(T)) {
+	semaphore := make(chan struct{}, loadMiauConnectConcurrency)
+	var wg sync.WaitGroup
+
+	for _, item := range items {
+		semaphore <- struct{}{}
+		wg.Add(1)
+		go func(item T) {
+			defer wg.Done()
+			defer func() { <-semaphore }()
+			task(item)
+		}(item)
+	}
+
+	wg.Wait()
+}
+
 func Get() *Whatsmiau {
 	mu.Lock()
 	defer mu.Unlock()
@@ -98,6 +117,7 @@ func LoadMiau(ctx context.Context, container *sqlstore.Container) {
 	callBridges := xsync.NewMap[string, *callBridge]()
 
 	clientLog := waLog.Stdout("Client", level, false)
+	clientsToConnect := make([]*whatsmeow.Client, 0, len(deviceStore))
 	for _, device := range deviceStore {
 		client := whatsmeow.NewClient(device, clientLog)
 		if client.Store.ID == nil {
@@ -112,13 +132,7 @@ func LoadMiau(ctx context.Context, container *sqlstore.Container) {
 				callClients.Store(instanceFound.ID, meowcaller.NewClient(client))
 			}
 			clients.Store(instanceFound.ID, client)
-			if err := client.Connect(); err != nil {
-				jid := ""
-				if client.Store != nil && client.Store.ID != nil {
-					jid = client.Store.ID.String()
-				}
-				zap.L().Error("failed to connect connected device", zap.Error(err), zap.String("jid", jid))
-			}
+			clientsToConnect = append(clientsToConnect, client)
 			continue
 		}
 
@@ -135,6 +149,16 @@ func LoadMiau(ctx context.Context, container *sqlstore.Container) {
 			}
 		}
 	}
+
+	runLoadMiauTasks(clientsToConnect, func(client *whatsmeow.Client) {
+		if err := client.Connect(); err != nil {
+			jid := ""
+			if client.Store != nil && client.Store.ID != nil {
+				jid = client.Store.ID.String()
+			}
+			zap.L().Error("failed to connect connected device", zap.Error(err), zap.String("jid", jid))
+		}
+	})
 
 	var storage interfaces.Storage
 	if env.Env.GCSEnabled {
