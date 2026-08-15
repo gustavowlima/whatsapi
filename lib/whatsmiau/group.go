@@ -491,7 +491,7 @@ func (s *Whatsmiau) UpdateGroupParticipant(ctx context.Context, req *UpdateParti
 		return nil, err
 	}
 
-	participants, err := client.UpdateGroupParticipants(ctx, *req.GroupJID, jids, action)
+	participants, err := client.UpdateGroupParticipantsWithCommunity(ctx, *req.GroupJID, jids, action)
 	if err != nil {
 		return nil, err
 	}
