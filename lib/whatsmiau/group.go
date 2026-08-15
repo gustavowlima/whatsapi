@@ -574,19 +574,14 @@ func (s *Whatsmiau) CreateCommunity(ctx context.Context, req *CreateCommunityReq
 	}
 
 	created, err := client.CreateGroup(ctx, whatsmeow.ReqCreateGroup{
-		Name: req.Subject,
+		Name:        req.Subject,
+		Description: req.Description,
 		GroupParent: types.GroupParent{
 			IsParent: true,
 		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create community: %w", err)
-	}
-
-	if req.Description != "" {
-		if err := client.SetGroupDescription(ctx, created.JID, req.Description); err != nil {
-			zap.L().Warn("community created but failed to set description", zap.Error(err), zap.String("community", created.JID.String()))
-		}
 	}
 
 	info, err := client.GetGroupInfo(ctx, created.JID)
