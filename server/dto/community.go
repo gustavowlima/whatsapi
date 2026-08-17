@@ -2,13 +2,13 @@ package dto
 
 type CreateCommunityRequest struct {
 	InstanceID  string `param:"instance" validate:"required" swaggerignore:"true"`
-	Subject     string `json:"subject" validate:"required,min=1,max=25"`
+	Subject     string `json:"subject" validate:"required,min=1,max=100"`
 	Description string `json:"description,omitempty"`
 }
 
 type CreateCommunitySubGroupRequest struct {
 	InstanceID   string   `param:"instance" validate:"required" swaggerignore:"true"`
-	Subject      string   `json:"subject" validate:"required,min=1,max=25"`
+	Subject      string   `json:"subject" validate:"required,min=1,max=100"`
 	ParentJid    string   `json:"parentJid" validate:"required"`
 	Participants []string `json:"participants" validate:"omitempty,dive,required"`
 }
