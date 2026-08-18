@@ -9,6 +9,7 @@ import (
 func Contact(group *echo.Group) {
 	controller := controllers.NewContacts(whatsmiau.Get())
 	group.GET("", controller.List)
+	group.POST("/find", controller.FindContact)
 }
 
 func ContactEVO(group *echo.Group) {

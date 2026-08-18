@@ -321,6 +321,14 @@ definitions:
     required:
     - number
     type: object
+  dto.FindContactRequest:
+    properties:
+      number:
+        example: "5511999999999"
+        type: string
+    required:
+    - number
+    type: object
   dto.FindWebhookResponse:
     properties:
       webhook:
@@ -1473,6 +1481,31 @@ definitions:
       wuid:
         type: string
     type: object
+  whatsmiau.FindContactResponse:
+    properties:
+      businessName:
+        type: string
+      firstName:
+        type: string
+      found:
+        type: boolean
+      fullName:
+        type: string
+      id:
+        type: string
+      isWhatsApp:
+        type: boolean
+      name:
+        type: string
+      profilePictureUrl:
+        type: string
+      pushName:
+        type: string
+      redactedPhone:
+        type: string
+      wuid:
+        type: string
+    type: object
   whatsmiau.FindParticipantsResponse:
     properties:
       participants:
@@ -1799,6 +1832,53 @@ paths:
       summary: Fetch profile picture URL (contact or group)
       tags:
       - Chat
+  /v1/chat/findContact/{instance}:
+    post:
+      consumes:
+      - application/json
+      description: Fetches contact details (name, pushName, etc.) and profile picture
+        URL for a specific contact or group.
+      operationId: postV1ChatFindContactByInstance
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instance
+        required: true
+        type: string
+      - description: Contact request parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FindContactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/whatsmiau.FindContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AuthenticationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Find contact details
+      tags:
+      - Contact
   /v1/chat/markMessageAsRead/{instance}:
     post:
       consumes:
@@ -3593,6 +3673,53 @@ paths:
       summary: Fetch profile picture URL (contact or group)
       tags:
       - Chat
+  /v1/instance/{instance}/chat/findContact:
+    post:
+      consumes:
+      - application/json
+      description: Fetches contact details (name, pushName, etc.) and profile picture
+        URL for a specific contact or group.
+      operationId: postV1InstanceByInstanceChatFindContact
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instance
+        required: true
+        type: string
+      - description: Contact request parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FindContactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/whatsmiau.FindContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AuthenticationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Find contact details
+      tags:
+      - Contact
   /v1/instance/{instance}/chat/presence:
     post:
       consumes:
@@ -4341,6 +4468,53 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: List contacts
+      tags:
+      - Contact
+  /v1/instance/{instance}/contact/find:
+    post:
+      consumes:
+      - application/json
+      description: Fetches contact details (name, pushName, etc.) and profile picture
+        URL for a specific contact or group.
+      operationId: postV1InstanceByInstanceContactFind
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instance
+        required: true
+        type: string
+      - description: Contact request parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FindContactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/whatsmiau.FindContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AuthenticationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Find contact details
       tags:
       - Contact
   /v1/instance/{instance}/group/acceptInviteCode:
