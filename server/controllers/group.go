@@ -40,6 +40,12 @@ func mapGroupError(err error) (int, string) {
 		return http.StatusBadRequest, "invite link invalid"
 	case errors.Is(err, whatsmeow.ErrGroupInviteLinkUnauthorized):
 		return http.StatusForbidden, "unauthorized to access invite link"
+	case errors.Is(err, whatsmeow.ErrIQBadRequest):
+		return http.StatusBadRequest, "WhatsApp rejected the group operation"
+	case errors.Is(err, whatsmeow.ErrIQNotAuthorized), errors.Is(err, whatsmeow.ErrIQForbidden):
+		return http.StatusForbidden, "WhatsApp rejected the group permissions"
+	case errors.Is(err, whatsmiau.ErrCommunityDefaultSubGroupNotFound):
+		return http.StatusNotFound, "community default subgroup not found"
 	case errors.Is(err, whatsmeow.ErrIQRateOverLimit):
 		return http.StatusTooManyRequests, "rate limit exceeded, try again later"
 	default:
@@ -635,6 +641,49 @@ func (s *Group) UpdateSetting(ctx echo.Context) error {
 		Action:     request.Action,
 	}); err != nil {
 		zap.L().Error("Whatsmiau.UpdateGroupSetting failed", zap.Error(err))
+		code, msg := mapGroupError(err)
+		return utils.HTTPFail(ctx, code, err, msg)
+	}
+	return ctx.JSON(http.StatusCreated, map[string]interface{}{})
+}
+
+// SetGroupAddMode godoc
+// @Summary      Set who can add members to a group
+// @Description  Sets admin_add or all_member_add. A community parent JID is automatically resolved to its default announcement subgroup.
+// @Tags         Group
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path  string true  "Instance ID"
+// @Param        body      body  dto.GroupSetAddModeRequest true  "Member add mode payload"
+// @Success      201       {object}  map[string]interface{}
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/group/setGroupAddMode/{instance} [post]
+func (s *Group) SetGroupAddMode(ctx echo.Context) error {
+	var request dto.GroupSetAddModeRequest
+	if err := ctx.Bind(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request body")
+	}
+	if err := validator.New().Struct(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid request body")
+	}
+	groupJid, err := parseGroupJID(request.GroupJid)
+	if err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid groupJid")
+	}
+
+	if err := s.whatsmiau.SetGroupAddMode(ctx.Request().Context(), &whatsmiau.SetGroupAddModeRequest{
+		InstanceID: request.InstanceID,
+		GroupJID:   groupJid,
+		Mode:       request.Mode,
+	}); err != nil {
+		zap.L().Error("Whatsmiau.SetGroupAddMode failed", zap.Error(err))
 		code, msg := mapGroupError(err)
 		return utils.HTTPFail(ctx, code, err, msg)
 	}

@@ -241,7 +241,7 @@
                     "type": "string"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -263,7 +263,7 @@
                     "type": "array"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -290,7 +290,7 @@
                     "type": "boolean"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -539,13 +539,32 @@
             ],
             "type": "object"
         },
+        "dto.GroupSetAddModeRequest": {
+            "properties": {
+                "groupJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "groupJid",
+                "mode"
+            ],
+            "type": "object"
+        },
         "dto.GroupSubjectRequest": {
             "properties": {
                 "groupJid": {
                     "type": "string"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -3661,6 +3680,102 @@
                 ]
             }
         },
+        "/v1/group/setGroupAddMode/{instance}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Sets admin_add or all_member_add. A community parent JID is automatically resolved to its default announcement subgroup.",
+                "operationId": "postV1GroupSetGroupAddModeByInstance",
+                "parameters": [
+                    {
+                        "description": "Instance ID",
+                        "in": "path",
+                        "name": "instance",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Member add mode payload",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupSetAddModeRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.AuthenticationErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "summary": "Set who can add members to a group",
+                "tags": [
+                    "Group"
+                ]
+            }
+        },
         "/v1/group/toggleEphemeral/{instance}": {
             "post": {
                 "consumes": [
@@ -6414,6 +6529,7 @@
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Accepts a group/subgroup JID. If communityJid is a community parent, the operation is applied to its default announcement subgroup.",
                 "operationId": "postV1InstanceByInstanceCommunitySetMemberAddMode",
                 "parameters": [
                     {

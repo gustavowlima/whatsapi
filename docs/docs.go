@@ -1247,6 +1247,95 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/group/setGroupAddMode/{instance}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sets admin_add or all_member_add. A community parent JID is automatically resolved to its default announcement subgroup.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Set who can add members to a group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Member add mode payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupSetAddModeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/group/toggleEphemeral/{instance}": {
             "post": {
                 "security": [
@@ -3772,6 +3861,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Accepts a group/subgroup JID. If communityJid is a community parent, the operation is applied to its default announcement subgroup.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7372,7 +7462,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -7396,7 +7486,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -7422,7 +7512,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -7665,6 +7755,25 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GroupSetAddModeRequest": {
+            "type": "object",
+            "required": [
+                "groupJid",
+                "mode"
+            ],
+            "properties": {
+                "groupJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ]
+                }
+            }
+        },
         "dto.GroupSubjectRequest": {
             "type": "object",
             "required": [
@@ -7677,7 +7786,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }

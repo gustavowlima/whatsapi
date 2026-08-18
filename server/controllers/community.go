@@ -325,6 +325,7 @@ func (s *Community) SetJoinApprovalMode(ctx echo.Context) error {
 
 // SetMemberAddMode godoc
 // @Summary      Toggle who can add members (admins only or all)
+// @Description  Accepts a group/subgroup JID. If communityJid is a community parent, the operation is applied to its default announcement subgroup.
 // @Tags         Community
 // @Accept       json
 // @Produce      json

@@ -763,22 +763,82 @@ type SetMemberAddModeRequest struct {
 	Mode         string
 }
 
-func (s *Whatsmiau) SetCommunityMemberAddMode(ctx context.Context, req *SetMemberAddModeRequest) error {
+type SetGroupAddModeRequest struct {
+	InstanceID string
+	GroupJID   *types.JID
+	Mode       string
+}
+
+var ErrCommunityDefaultSubGroupNotFound = errors.New("community default subgroup not found")
+
+type groupAddModeClient interface {
+	GetGroupInfo(context.Context, types.JID) (*types.GroupInfo, error)
+	GetSubGroups(context.Context, types.JID) ([]*types.GroupLinkTarget, error)
+	SetGroupMemberAddMode(context.Context, types.JID, types.GroupMemberAddMode) error
+}
+
+func parseGroupAddMode(mode string) (types.GroupMemberAddMode, error) {
+	switch mode {
+	case "admin_add":
+		return types.GroupMemberAddModeAdmin, nil
+	case "all_member_add":
+		return types.GroupMemberAddModeAllMember, nil
+	default:
+		return "", fmt.Errorf("invalid mode: %s", mode)
+	}
+}
+
+// resolveGroupAddModeTarget translates a community parent JID to its default
+// announcement subgroup. WhatsApp rejects member_add_mode IQs sent directly to
+// the parent with 400 bad-request, while regular groups and all subgroups accept
+// the operation directly.
+func resolveGroupAddModeTarget(ctx context.Context, client groupAddModeClient, requestedJID types.JID) (types.JID, error) {
+	info, err := client.GetGroupInfo(ctx, requestedJID)
+	if err != nil {
+		return types.EmptyJID, fmt.Errorf("failed to get member add mode target %s: %w", requestedJID, err)
+	}
+	if !info.IsParent {
+		return requestedJID, nil
+	}
+
+	subGroups, err := client.GetSubGroups(ctx, requestedJID)
+	if err != nil {
+		return types.EmptyJID, fmt.Errorf("failed to get subgroups for community %s: %w", requestedJID, err)
+	}
+	for _, subGroup := range subGroups {
+		if subGroup.IsDefaultSubGroup {
+			return subGroup.JID, nil
+		}
+	}
+	return types.EmptyJID, fmt.Errorf("%w for %s", ErrCommunityDefaultSubGroupNotFound, requestedJID)
+}
+
+func setGroupAddMode(ctx context.Context, client groupAddModeClient, groupJID types.JID, requestedMode string) error {
+	mode, err := parseGroupAddMode(requestedMode)
+	if err != nil {
+		return err
+	}
+	targetJID, err := resolveGroupAddModeTarget(ctx, client, groupJID)
+	if err != nil {
+		return err
+	}
+	return client.SetGroupMemberAddMode(ctx, targetJID, mode)
+}
+
+func (s *Whatsmiau) SetGroupAddMode(ctx context.Context, req *SetGroupAddModeRequest) error {
 	client, ok := s.clients.Load(req.InstanceID)
 	if !ok {
 		return whatsmeow.ErrClientIsNil
 	}
+	return setGroupAddMode(ctx, client, *req.GroupJID, req.Mode)
+}
 
-	var mode types.GroupMemberAddMode
-	switch req.Mode {
-	case "admin_add":
-		mode = types.GroupMemberAddModeAdmin
-	case "all_member_add":
-		mode = types.GroupMemberAddModeAllMember
-	default:
-		return fmt.Errorf("invalid mode: %s", req.Mode)
-	}
-	return client.SetGroupMemberAddMode(ctx, *req.CommunityJID, mode)
+func (s *Whatsmiau) SetCommunityMemberAddMode(ctx context.Context, req *SetMemberAddModeRequest) error {
+	return s.SetGroupAddMode(ctx, &SetGroupAddModeRequest{
+		InstanceID: req.InstanceID,
+		GroupJID:   req.CommunityJID,
+		Mode:       req.Mode,
+	})
 }
 
 // ---------- Community: Request participants ----------
