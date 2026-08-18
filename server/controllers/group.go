@@ -44,8 +44,8 @@ func mapGroupError(err error) (int, string) {
 		return http.StatusBadRequest, "WhatsApp rejected the group operation"
 	case errors.Is(err, whatsmeow.ErrIQNotAuthorized), errors.Is(err, whatsmeow.ErrIQForbidden):
 		return http.StatusForbidden, "WhatsApp rejected the group permissions"
-	case errors.Is(err, whatsmiau.ErrCommunityDefaultSubGroupNotFound):
-		return http.StatusNotFound, "community default subgroup not found"
+	case errors.Is(err, whatsmiau.ErrGroupAddModeRequiresCommunity):
+		return http.StatusBadRequest, "group add mode requires a community parent"
 	case errors.Is(err, whatsmeow.ErrIQRateOverLimit):
 		return http.StatusTooManyRequests, "rate limit exceeded, try again later"
 	default:
@@ -648,14 +648,14 @@ func (s *Group) UpdateSetting(ctx echo.Context) error {
 }
 
 // SetGroupAddMode godoc
-// @Summary      Set who can add members to a group
-// @Description  Sets admin_add or all_member_add. A community parent JID is automatically resolved to its default announcement subgroup.
-// @Tags         Group
+// @Summary      Set who can add groups to a community
+// @Description  Use admin_add to restrict adding/linking groups to community admins, or all_member_add to allow any community member.
+// @Tags         Community
 // @Accept       json
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        instance  path  string true  "Instance ID"
-// @Param        body      body  dto.GroupSetAddModeRequest true  "Member add mode payload"
+// @Param        body      body  dto.GroupSetAddModeRequest true  "Community group-add mode payload"
 // @Success      201       {object}  map[string]interface{}
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      403       {object}  utils.HTTPErrorResponse

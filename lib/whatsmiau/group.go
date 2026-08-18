@@ -42,6 +42,7 @@ type GroupInfoResponse struct {
 	IsCommunityAnnounce bool                       `json:"isCommunityAnnounce"`
 	LinkedParent        string                     `json:"linkedParent,omitempty"`
 	MemberAddMode       string                     `json:"memberAddMode,omitempty"`
+	GroupAddMode        string                     `json:"groupAddMode,omitempty"`
 	JoinApprovalMode    bool                       `json:"joinApprovalMode"`
 	Ephemeral           uint32                     `json:"ephemeral,omitempty"`
 	Participants        []GroupParticipantResponse `json:"participants,omitempty"`
@@ -71,6 +72,12 @@ func (s *Whatsmiau) buildGroupInfoResponse(ctx context.Context, instanceID strin
 	}
 	if !g.LinkedParentJID.IsEmpty() {
 		resp.LinkedParent = g.LinkedParentJID.String()
+	}
+	if g.IsParent {
+		resp.GroupAddMode = string(types.CommunityGroupAddModeAdmin)
+		if g.AllowNonAdminSubGroupCreation {
+			resp.GroupAddMode = string(types.CommunityGroupAddModeAllMember)
+		}
 	}
 	if g.ParticipantCount == 0 {
 		resp.Size = len(g.Participants)
@@ -757,72 +764,43 @@ func (s *Whatsmiau) SetCommunityJoinApprovalMode(ctx context.Context, req *SetJo
 	return client.SetGroupJoinApprovalMode(ctx, *req.CommunityJID, req.Mode)
 }
 
-type SetMemberAddModeRequest struct {
-	InstanceID   string
-	CommunityJID *types.JID
-	Mode         string
-}
-
 type SetGroupAddModeRequest struct {
 	InstanceID string
 	GroupJID   *types.JID
 	Mode       string
 }
 
-var ErrCommunityDefaultSubGroupNotFound = errors.New("community default subgroup not found")
+var ErrGroupAddModeRequiresCommunity = errors.New("group add mode requires a community parent")
 
 type groupAddModeClient interface {
 	GetGroupInfo(context.Context, types.JID) (*types.GroupInfo, error)
-	GetSubGroups(context.Context, types.JID) ([]*types.GroupLinkTarget, error)
-	SetGroupMemberAddMode(context.Context, types.JID, types.GroupMemberAddMode) error
+	SetCommunityGroupAddMode(context.Context, types.JID, types.CommunityGroupAddMode) error
 }
 
-func parseGroupAddMode(mode string) (types.GroupMemberAddMode, error) {
+func parseGroupAddMode(mode string) (types.CommunityGroupAddMode, error) {
 	switch mode {
 	case "admin_add":
-		return types.GroupMemberAddModeAdmin, nil
+		return types.CommunityGroupAddModeAdmin, nil
 	case "all_member_add":
-		return types.GroupMemberAddModeAllMember, nil
+		return types.CommunityGroupAddModeAllMember, nil
 	default:
 		return "", fmt.Errorf("invalid mode: %s", mode)
 	}
 }
 
-// resolveGroupAddModeTarget translates a community parent JID to its default
-// announcement subgroup. WhatsApp rejects member_add_mode IQs sent directly to
-// the parent with 400 bad-request, while regular groups and all subgroups accept
-// the operation directly.
-func resolveGroupAddModeTarget(ctx context.Context, client groupAddModeClient, requestedJID types.JID) (types.JID, error) {
-	info, err := client.GetGroupInfo(ctx, requestedJID)
-	if err != nil {
-		return types.EmptyJID, fmt.Errorf("failed to get member add mode target %s: %w", requestedJID, err)
-	}
-	if !info.IsParent {
-		return requestedJID, nil
-	}
-
-	subGroups, err := client.GetSubGroups(ctx, requestedJID)
-	if err != nil {
-		return types.EmptyJID, fmt.Errorf("failed to get subgroups for community %s: %w", requestedJID, err)
-	}
-	for _, subGroup := range subGroups {
-		if subGroup.IsDefaultSubGroup {
-			return subGroup.JID, nil
-		}
-	}
-	return types.EmptyJID, fmt.Errorf("%w for %s", ErrCommunityDefaultSubGroupNotFound, requestedJID)
-}
-
-func setGroupAddMode(ctx context.Context, client groupAddModeClient, groupJID types.JID, requestedMode string) error {
+func setGroupAddMode(ctx context.Context, client groupAddModeClient, communityJID types.JID, requestedMode string) error {
 	mode, err := parseGroupAddMode(requestedMode)
 	if err != nil {
 		return err
 	}
-	targetJID, err := resolveGroupAddModeTarget(ctx, client, groupJID)
+	info, err := client.GetGroupInfo(ctx, communityJID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get community info for group add mode %s: %w", communityJID, err)
 	}
-	return client.SetGroupMemberAddMode(ctx, targetJID, mode)
+	if !info.IsParent {
+		return fmt.Errorf("%w: %s", ErrGroupAddModeRequiresCommunity, communityJID)
+	}
+	return client.SetCommunityGroupAddMode(ctx, communityJID, mode)
 }
 
 func (s *Whatsmiau) SetGroupAddMode(ctx context.Context, req *SetGroupAddModeRequest) error {
@@ -831,14 +809,6 @@ func (s *Whatsmiau) SetGroupAddMode(ctx context.Context, req *SetGroupAddModeReq
 		return whatsmeow.ErrClientIsNil
 	}
 	return setGroupAddMode(ctx, client, *req.GroupJID, req.Mode)
-}
-
-func (s *Whatsmiau) SetCommunityMemberAddMode(ctx context.Context, req *SetMemberAddModeRequest) error {
-	return s.SetGroupAddMode(ctx, &SetGroupAddModeRequest{
-		InstanceID: req.InstanceID,
-		GroupJID:   req.CommunityJID,
-		Mode:       req.Mode,
-	})
 }
 
 // ---------- Community: Request participants ----------

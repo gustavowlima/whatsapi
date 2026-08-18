@@ -18,12 +18,12 @@ func TestMapGroupErrorMapsWhatsAppBadRequest(t *testing.T) {
 	}
 }
 
-func TestMapGroupErrorMapsMissingCommunityAnnouncementGroup(t *testing.T) {
-	code, message := mapGroupError(whatsmiau.ErrCommunityDefaultSubGroupNotFound)
-	if code != http.StatusNotFound {
-		t.Fatalf("status = %d, want %d", code, http.StatusNotFound)
+func TestMapGroupErrorMapsGroupAddModeWithoutCommunity(t *testing.T) {
+	code, message := mapGroupError(whatsmiau.ErrGroupAddModeRequiresCommunity)
+	if code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", code, http.StatusBadRequest)
 	}
-	if message != "community default subgroup not found" {
+	if message != "group add mode requires a community parent" {
 		t.Fatalf("message = %q", message)
 	}
 }

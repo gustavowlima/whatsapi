@@ -11,14 +11,11 @@ import (
 type fakeGroupAddModeClient struct {
 	info          *types.GroupInfo
 	infoErr       error
-	subGroups     []*types.GroupLinkTarget
-	subGroupsErr  error
 	setErr        error
 	setJID        types.JID
-	setMode       types.GroupMemberAddMode
+	setMode       types.CommunityGroupAddMode
 	setCallCount  int
 	infoCallCount int
-	subCallCount  int
 }
 
 func (f *fakeGroupAddModeClient) GetGroupInfo(context.Context, types.JID) (*types.GroupInfo, error) {
@@ -26,86 +23,79 @@ func (f *fakeGroupAddModeClient) GetGroupInfo(context.Context, types.JID) (*type
 	return f.info, f.infoErr
 }
 
-func (f *fakeGroupAddModeClient) GetSubGroups(context.Context, types.JID) ([]*types.GroupLinkTarget, error) {
-	f.subCallCount++
-	return f.subGroups, f.subGroupsErr
-}
-
-func (f *fakeGroupAddModeClient) SetGroupMemberAddMode(_ context.Context, jid types.JID, mode types.GroupMemberAddMode) error {
+func (f *fakeGroupAddModeClient) SetCommunityGroupAddMode(_ context.Context, jid types.JID, mode types.CommunityGroupAddMode) error {
 	f.setCallCount++
 	f.setJID = jid
 	f.setMode = mode
 	return f.setErr
 }
 
-func TestSetGroupAddModeUsesRequestedRegularGroup(t *testing.T) {
-	requested := types.NewJID("regular", types.GroupServer)
-	client := &fakeGroupAddModeClient{info: &types.GroupInfo{JID: requested}}
+func TestSetGroupAddModeRestrictsCommunityToAdmins(t *testing.T) {
+	community := types.NewJID("community", types.GroupServer)
+	client := &fakeGroupAddModeClient{
+		info: &types.GroupInfo{JID: community, GroupParent: types.GroupParent{IsParent: true}},
+	}
 
-	err := setGroupAddMode(context.Background(), client, requested, "all_member_add")
+	err := setGroupAddMode(context.Background(), client, community, "admin_add")
 	if err != nil {
 		t.Fatalf("setGroupAddMode returned an unexpected error: %v", err)
 	}
-	if client.setJID != requested {
-		t.Fatalf("set target = %s, want %s", client.setJID, requested)
+	if client.setJID != community {
+		t.Fatalf("set target = %s, want community %s", client.setJID, community)
 	}
-	if client.setMode != types.GroupMemberAddModeAllMember {
-		t.Fatalf("set mode = %q, want %q", client.setMode, types.GroupMemberAddModeAllMember)
-	}
-	if client.subCallCount != 0 {
-		t.Fatalf("GetSubGroups calls = %d, want 0", client.subCallCount)
+	if client.setMode != types.CommunityGroupAddModeAdmin {
+		t.Fatalf("set mode = %q, want %q", client.setMode, types.CommunityGroupAddModeAdmin)
 	}
 }
 
-func TestSetGroupAddModeResolvesCommunityParent(t *testing.T) {
-	parent := types.NewJID("parent", types.GroupServer)
-	announcement := types.NewJID("announcement", types.GroupServer)
+func TestSetGroupAddModeAllowsAllCommunityMembers(t *testing.T) {
+	community := types.NewJID("community", types.GroupServer)
 	client := &fakeGroupAddModeClient{
-		info: &types.GroupInfo{JID: parent, GroupParent: types.GroupParent{IsParent: true}},
-		subGroups: []*types.GroupLinkTarget{
-			{JID: types.NewJID("child", types.GroupServer)},
-			{JID: announcement, GroupIsDefaultSub: types.GroupIsDefaultSub{IsDefaultSubGroup: true}},
-		},
+		info: &types.GroupInfo{JID: community, GroupParent: types.GroupParent{IsParent: true}},
 	}
 
-	err := setGroupAddMode(context.Background(), client, parent, "admin_add")
+	err := setGroupAddMode(context.Background(), client, community, "all_member_add")
 	if err != nil {
 		t.Fatalf("setGroupAddMode returned an unexpected error: %v", err)
 	}
-	if client.setJID != announcement {
-		t.Fatalf("set target = %s, want announcement subgroup %s", client.setJID, announcement)
-	}
-	if client.setMode != types.GroupMemberAddModeAdmin {
-		t.Fatalf("set mode = %q, want %q", client.setMode, types.GroupMemberAddModeAdmin)
-	}
-	if client.subCallCount != 1 {
-		t.Fatalf("GetSubGroups calls = %d, want 1", client.subCallCount)
+	if client.setMode != types.CommunityGroupAddModeAllMember {
+		t.Fatalf("set mode = %q, want %q", client.setMode, types.CommunityGroupAddModeAllMember)
 	}
 }
 
-func TestSetGroupAddModeRejectsParentWithoutDefaultSubGroup(t *testing.T) {
-	parent := types.NewJID("parent", types.GroupServer)
-	client := &fakeGroupAddModeClient{
-		info:      &types.GroupInfo{JID: parent, GroupParent: types.GroupParent{IsParent: true}},
-		subGroups: []*types.GroupLinkTarget{{JID: types.NewJID("child", types.GroupServer)}},
-	}
+func TestSetGroupAddModeRejectsNonCommunity(t *testing.T) {
+	group := types.NewJID("group", types.GroupServer)
+	client := &fakeGroupAddModeClient{info: &types.GroupInfo{JID: group}}
 
-	err := setGroupAddMode(context.Background(), client, parent, "admin_add")
-	if !errors.Is(err, ErrCommunityDefaultSubGroupNotFound) {
-		t.Fatalf("error = %v, want ErrCommunityDefaultSubGroupNotFound", err)
+	err := setGroupAddMode(context.Background(), client, group, "admin_add")
+	if !errors.Is(err, ErrGroupAddModeRequiresCommunity) {
+		t.Fatalf("error = %v, want ErrGroupAddModeRequiresCommunity", err)
 	}
 	if client.setCallCount != 0 {
-		t.Fatalf("SetGroupMemberAddMode calls = %d, want 0", client.setCallCount)
+		t.Fatalf("SetCommunityGroupAddMode calls = %d, want 0", client.setCallCount)
 	}
 }
 
 func TestSetGroupAddModeRejectsInvalidModeBeforeNetworkCalls(t *testing.T) {
 	client := &fakeGroupAddModeClient{}
-	err := setGroupAddMode(context.Background(), client, types.NewJID("group", types.GroupServer), "everyone")
+	err := setGroupAddMode(context.Background(), client, types.NewJID("community", types.GroupServer), "everyone")
 	if err == nil {
 		t.Fatal("setGroupAddMode returned nil for an invalid mode")
 	}
 	if client.infoCallCount != 0 || client.setCallCount != 0 {
 		t.Fatalf("network calls were made for invalid mode: info=%d set=%d", client.infoCallCount, client.setCallCount)
+	}
+}
+
+func TestSetGroupAddModePropagatesMetadataError(t *testing.T) {
+	wantErr := errors.New("metadata unavailable")
+	client := &fakeGroupAddModeClient{infoErr: wantErr}
+
+	err := setGroupAddMode(context.Background(), client, types.NewJID("community", types.GroupServer), "admin_add")
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("error = %v, want wrapped %v", err, wantErr)
+	}
+	if client.setCallCount != 0 {
+		t.Fatalf("SetCommunityGroupAddMode calls = %d, want 0", client.setCallCount)
 	}
 }

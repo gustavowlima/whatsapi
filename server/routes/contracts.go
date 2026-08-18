@@ -64,7 +64,7 @@ func DocumentedV1Operations() []Operation {
 	}
 	appendOperation(http.MethodPost, "/v1/group/setGroupAddMode/{instance}")
 
-	for _, action := range []string{"create", "createSubGroup", "linkGroup", "unlinkGroup", "setJoinApprovalMode", "setMemberAddMode", "requestParticipants/update"} {
+	for _, action := range []string{"create", "createSubGroup", "linkGroup", "unlinkGroup", "setJoinApprovalMode", "requestParticipants/update"} {
 		appendOperation(http.MethodPost, "/v1/instance/{instance}/community/"+action)
 	}
 	for _, action := range []string{"subGroups", "linkedGroupsParticipants", "requestParticipants"} {

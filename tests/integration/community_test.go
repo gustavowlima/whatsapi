@@ -90,15 +90,15 @@ func TestCommunityFlow(t *testing.T) {
 		return info.Description
 	}
 
-	readGroupAddMode := func(t *testing.T, groupJID string) string {
+	readCommunityGroupAddMode := func(t *testing.T, communityJID string) string {
 		t.Helper()
-		resp := do(t, http.MethodGet, groupURLQuery(t, "findGroupInfos", "groupJid="+groupJID), nil)
+		resp := do(t, http.MethodGet, groupURLQuery(t, "findGroupInfos", "groupJid="+communityJID), nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		var info struct {
-			MemberAddMode string `json:"memberAddMode"`
+			GroupAddMode string `json:"groupAddMode"`
 		}
 		mustDecode(t, resp, &info)
-		return info.MemberAddMode
+		return info.GroupAddMode
 	}
 
 	t.Run("UpdateDescriptionViaCommunityParent", func(t *testing.T) {
@@ -155,9 +155,9 @@ func TestCommunityFlow(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
-	// SetJoinApprovalMode aplica-se diretamente a subgrupos. SetMemberAddMode
-	// também aceita o parent da comunidade e o core o resolve para o grupo de
-	// anúncios padrão, já que o WhatsApp rejeita o IQ enviado ao parent.
+	// SetJoinApprovalMode aplica-se diretamente a subgrupos. SetGroupAddMode
+	// aplica-se ao parent da comunidade e controla se membros que não são admins
+	// podem adicionar ou vincular grupos à comunidade.
 	t.Run("SetJoinApprovalMode_True", func(t *testing.T) {
 		if subGroupJID == "" {
 			t.Skip("CreateSubGroup falhou — pulando SetJoinApprovalMode")
@@ -183,50 +183,33 @@ func TestCommunityFlow(t *testing.T) {
 	})
 
 	t.Run("SetGroupAddMode_AdminOnly", func(t *testing.T) {
-		if subGroupJID == "" {
-			t.Skip("CreateSubGroup falhou — pulando SetGroupAddMode")
-		}
 		resp := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
-			"groupJid": subGroupJID,
+			"groupJid": communityJID,
 			"mode":     "admin_add",
 		})
 		defer drainClose(resp)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
-		assert.Equal(t, "admin_add", readGroupAddMode(t, subGroupJID))
+		assert.Equal(t, "admin_add", readCommunityGroupAddMode(t, communityJID))
 	})
 
 	t.Run("SetGroupAddMode_AllMembers", func(t *testing.T) {
-		if subGroupJID == "" {
-			t.Skip("CreateSubGroup falhou — pulando SetGroupAddMode")
-		}
 		resp := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
-			"groupJid": subGroupJID,
+			"groupJid": communityJID,
 			"mode":     "all_member_add",
 		})
 		defer drainClose(resp)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
-		assert.Equal(t, "all_member_add", readGroupAddMode(t, subGroupJID))
+		assert.Equal(t, "all_member_add", readCommunityGroupAddMode(t, communityJID))
 	})
 
-	t.Run("SetMemberAddMode_CommunityParentResolvesAnnouncement", func(t *testing.T) {
-		if announcementJID == "" {
-			t.Skip("SubGroups não retornou o grupo de anúncios")
-		}
-		resp := do(t, http.MethodPost, communityURL(t, "setMemberAddMode"), map[string]any{
-			"communityJid": communityJID,
-			"mode":         "all_member_add",
-		})
-		defer drainClose(resp)
-		require.Equal(t, http.StatusCreated, resp.StatusCode)
-		assert.Equal(t, "all_member_add", readGroupAddMode(t, announcementJID))
-
-		restore := do(t, http.MethodPost, communityURL(t, "setMemberAddMode"), map[string]any{
-			"communityJid": communityJID,
-			"mode":         "admin_add",
+	t.Run("SetGroupAddMode_RestoreAdminOnly", func(t *testing.T) {
+		restore := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
+			"groupJid": communityJID,
+			"mode":     "admin_add",
 		})
 		defer drainClose(restore)
 		require.Equal(t, http.StatusCreated, restore.StatusCode)
-		assert.Equal(t, "admin_add", readGroupAddMode(t, announcementJID))
+		assert.Equal(t, "admin_add", readCommunityGroupAddMode(t, communityJID))
 	})
 
 	t.Run("RequestParticipants", func(t *testing.T) {
@@ -296,15 +279,6 @@ func TestCommunityValidation(t *testing.T) {
 	t.Run("LinkGroup_MissingChildJid", func(t *testing.T) {
 		resp := do(t, http.MethodPost, communityURL(t, "linkGroup"), map[string]any{
 			"parentJid": "123456789@g.us",
-		})
-		defer drainClose(resp)
-		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	})
-
-	t.Run("SetMemberAddMode_InvalidMode", func(t *testing.T) {
-		resp := do(t, http.MethodPost, communityURL(t, "setMemberAddMode"), map[string]any{
-			"communityJid": "123456789@g.us",
-			"mode":         "everyone",
 		})
 		defer drainClose(resp)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)

@@ -76,19 +76,6 @@ definitions:
     required:
     - communityJid
     type: object
-  dto.CommunitySetMemberAddModeRequest:
-    properties:
-      communityJid:
-        type: string
-      mode:
-        enum:
-        - admin_add
-        - all_member_add
-        type: string
-    required:
-    - communityJid
-    - mode
-    type: object
   dto.CommunityUpdateRequestParticipantsRequest:
     properties:
       action:
@@ -1460,6 +1447,8 @@ definitions:
         type: string
       ephemeral:
         type: integer
+      groupAddMode:
+        type: string
       id:
         type: string
       isCommunity:
@@ -2456,8 +2445,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Sets admin_add or all_member_add. A community parent JID is automatically
-        resolved to its default announcement subgroup.
+      description: Use admin_add to restrict adding/linking groups to community admins,
+        or all_member_add to allow any community member.
       operationId: postV1GroupSetGroupAddModeByInstance
       parameters:
       - description: Instance ID
@@ -2465,7 +2454,7 @@ paths:
         name: instance
         required: true
         type: string
-      - description: Member add mode payload
+      - description: Community group-add mode payload
         in: body
         name: body
         required: true
@@ -2513,9 +2502,9 @@ paths:
             $ref: '#/definitions/utils.HTTPErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Set who can add members to a group
+      summary: Set who can add groups to a community
       tags:
-      - Group
+      - Community
   /v1/group/toggleEphemeral/{instance}:
     post:
       consumes:
@@ -3943,70 +3932,6 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Toggle join-approval mode for a community
-      tags:
-      - Community
-  /v1/instance/{instance}/community/setMemberAddMode:
-    post:
-      consumes:
-      - application/json
-      description: Accepts a group/subgroup JID. If communityJid is a community parent,
-        the operation is applied to its default announcement subgroup.
-      operationId: postV1InstanceByInstanceCommunitySetMemberAddMode
-      parameters:
-      - description: Instance ID
-        in: path
-        name: instance
-        required: true
-        type: string
-      - description: Mode payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CommunitySetMemberAddModeRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/utils.AuthenticationErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "410":
-          description: Gone
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "429":
-          description: Too Many Requests
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Toggle who can add members (admins only or all)
       tags:
       - Community
   /v1/instance/{instance}/community/subGroups:

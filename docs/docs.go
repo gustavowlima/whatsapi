@@ -1254,7 +1254,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Sets admin_add or all_member_add. A community parent JID is automatically resolved to its default announcement subgroup.",
+                "description": "Use admin_add to restrict adding/linking groups to community admins, or all_member_add to allow any community member.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1262,9 +1262,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Group"
+                    "Community"
                 ],
-                "summary": "Set who can add members to a group",
+                "summary": "Set who can add groups to a community",
                 "parameters": [
                     {
                         "type": "string",
@@ -1274,7 +1274,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Member add mode payload",
+                        "description": "Community group-add mode payload",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -3798,95 +3798,6 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/dto.CommunitySetJoinApprovalModeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "410": {
-                        "description": "Gone",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "429": {
-                        "description": "Too Many Requests",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/instance/{instance}/community/setMemberAddMode": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Accepts a group/subgroup JID. If communityJid is a community parent, the operation is applied to its default announcement subgroup.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Community"
-                ],
-                "summary": "Toggle who can add members (admins only or all)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Instance ID",
-                        "name": "instance",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Mode payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CommunitySetMemberAddModeRequest"
                         }
                     }
                 ],
@@ -7330,25 +7241,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CommunitySetMemberAddModeRequest": {
-            "type": "object",
-            "required": [
-                "communityJid",
-                "mode"
-            ],
-            "properties": {
-                "communityJid": {
-                    "type": "string"
-                },
-                "mode": {
-                    "type": "string",
-                    "enum": [
-                        "admin_add",
-                        "all_member_add"
-                    ]
-                }
-            }
-        },
         "dto.CommunityUpdateRequestParticipantsRequest": {
             "type": "object",
             "required": [
@@ -9384,6 +9276,9 @@ const docTemplate = `{
                 },
                 "ephemeral": {
                     "type": "integer"
+                },
+                "groupAddMode": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
