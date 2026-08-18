@@ -1,14 +1,14 @@
-name: dxchat-whatsmiau
+name: dxchat-whatsapi
 
 services:
-  whatsmiau:
-    image: ${WHATSMIAU_IMAGE:-gustavowlimadev/whatsmiau:develop}
-    container_name: dxchat-whatsmiau
+  whatsapi:
+    image: ${WHATSAPI_IMAGE:-gustavowlimadev/whatsapi:develop}
+    container_name: dxchat-whatsapi
     environment:
       PORT: "8080"
-      DEBUG_MODE: ${WHATSMIAU_DEBUG_MODE:-false}
-      DEBUG_WHATSMEOW: ${WHATSMIAU_DEBUG_WHATSMEOW:-false}
-      REDIS_URL: whatsmiau-redis:6379
+      DEBUG_MODE: ${WHATSAPI_DEBUG_MODE:-false}
+      DEBUG_WHATSMEOW: ${WHATSAPI_DEBUG_WHATSMEOW:-false}
+      REDIS_URL: whatsapi-redis:6379
       REDIS_PASSWORD: ""
       REDIS_TLS: "false"
       API_KEY: ${API_KEY:-default}
@@ -16,32 +16,32 @@ services:
       DB_URL: "file:/app/data/data.db?_foreign_keys=on"
       GCS_ENABLED: "false"
       GCL_ENABLED: "false"
-      EMITTER_BUFFER_SIZE: ${WHATSMIAU_EMITTER_BUFFER_SIZE:-2048}
-      EMITTER_WORKERS: ${WHATSMIAU_EMITTER_WORKERS:-50}
-      HANDLER_SEMAPHORE_SIZE: ${WHATSMIAU_HANDLER_SEMAPHORE_SIZE:-512}
-      PROXY_ADDRESSES: ${WHATSMIAU_PROXY_ADDRESSES:-}
-      PROXY_STRATEGY: ${WHATSMIAU_PROXY_STRATEGY:-RANDOM}
-      PROXY_NO_MEDIA: ${WHATSMIAU_PROXY_NO_MEDIA:-false}
+      EMITTER_BUFFER_SIZE: ${WHATSAPI_EMITTER_BUFFER_SIZE:-2048}
+      EMITTER_WORKERS: ${WHATSAPI_EMITTER_WORKERS:-50}
+      HANDLER_SEMAPHORE_SIZE: ${WHATSAPI_HANDLER_SEMAPHORE_SIZE:-512}
+      PROXY_ADDRESSES: ${WHATSAPI_PROXY_ADDRESSES:-}
+      PROXY_STRATEGY: ${WHATSAPI_PROXY_STRATEGY:-RANDOM}
+      PROXY_NO_MEDIA: ${WHATSAPI_PROXY_NO_MEDIA:-false}
     ports:
-      - "${WHATSMIAU_PORT:-8080}:8080"
+      - "${WHATSAPI_PORT:-8080}:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - whatsmiau_data:/app/data
+      - whatsapi_data:/app/data
     depends_on:
-      whatsmiau-redis:
+      whatsapi-redis:
         condition: service_healthy
     networks:
       - default
       - dxchat
     restart: unless-stopped
 
-  whatsmiau-redis:
+  whatsapi-redis:
     image: redis:8-alpine
-    container_name: dxchat-whatsmiau-redis
+    container_name: dxchat-whatsapi-redis
     command: redis-server --appendonly yes
     volumes:
-      - whatsmiau_redis_data:/data
+      - whatsapi_redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -50,8 +50,8 @@ services:
     restart: unless-stopped
 
 volumes:
-  whatsmiau_data:
-  whatsmiau_redis_data:
+  whatsapi_data:
+  whatsapi_redis_data:
 
 networks:
   dxchat:
