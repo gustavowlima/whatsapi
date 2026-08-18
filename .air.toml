@@ -1,0 +1,14 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -tags libsqlite3 -o ./tmp/main main.go"
+  bin = "./tmp/main"
+  include_ext = ["go", "yaml", "json"]
+  exclude_dir = ["tmp", "vendor", "data"]
+  delay = 800 # ms
+  stop_on_error = true
+  send_interrupt = true
+
+[log]
+  time = true

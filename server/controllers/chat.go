@@ -247,3 +247,48 @@ func (s *Chat) DeleteMessageForEveryone(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, map[string]interface{}{})
 }
+
+// FetchProfilePicture godoc
+// @Summary      Fetch profile picture URL (contact or group)
+// @Description  Fetches the WhatsApp profile picture URL. Accepts either a phone number (contact) or a group JID.
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path      string                         true  "Instance ID"
+// @Param        body      body      dto.FetchProfilePictureRequest true  "Number or group JID to fetch"
+// @Success      200       {object}  whatsmiau.FetchProfilePictureResponse
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/chat/fetchProfilePictureUrl [post]
+// @Router       /v1/chat/fetchProfilePictureUrl/{instance} [post]
+func (s *Chat) FetchProfilePicture(ctx echo.Context) error {
+	var request dto.FetchProfilePictureRequest
+	if err := ctx.Bind(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request body")
+	}
+
+	if err := validator.New().Struct(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid request body")
+	}
+
+	number, err := numberToJid(request.Number)
+	if err != nil {
+		zap.L().Error("error converting number to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number or group jid format")
+	}
+
+	response, err := s.whatsmiau.FetchProfilePicture(ctx.Request().Context(), &whatsmiau.FetchProfilePictureRequest{
+		InstanceID: request.InstanceID,
+		Number:     number,
+		Preview:    false,
+	})
+	if err != nil {
+		zap.L().Error("Whatsmiau.FetchProfilePicture failed", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusInternalServerError, err, "failed to fetch profile picture")
+	}
+
+	return ctx.JSON(http.StatusOK, response)
+}
+

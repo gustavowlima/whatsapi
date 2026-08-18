@@ -48,3 +48,9 @@ type DeleteMessageForEveryoneRequest struct {
 	Participant string `json:"participant,omitempty" validate:"omitempty"`
 	FromMe      bool   `json:"fromMe"`
 }
+
+type FetchProfilePictureRequest struct {
+	InstanceID string `param:"instance" validate:"required" swaggerignore:"true"`
+	Number     string `json:"number" validate:"required"` // aceita número de contato OU groupJid (ex: "120363012345678901@g.us")
+}
+

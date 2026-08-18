@@ -1,0 +1,65 @@
+services:
+  whatsmiau:
+    image: whatsmiau:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: whatsmiau
+    volumes:
+      - .:/app
+      - dxchat-whatsmiau_whatsmiau_data:/app/data
+      - go_pkg_mod:/go/pkg/mod
+    ports:
+      - "${WHATSMIAU_PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      DEBUG_MODE: "true"
+      DEBUG_WHATSMEOW: "true"
+      REDIS_URL: whatsmiau-redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_TLS: "false"
+      API_KEY: ${API_KEY:-default}
+      DIALECT_DB: sqlite3
+      DB_URL: "file:/app/data/data.db?_foreign_keys=on"
+      GCS_ENABLED: "false"
+      GCL_ENABLED: "false"
+      EMITTER_BUFFER_SIZE: 2048
+      EMITTER_WORKERS: 50
+      HANDLER_SEMAPHORE_SIZE: 512
+      PROXY_ADDRESSES: ""
+      PROXY_STRATEGY: RANDOM
+      PROXY_NO_MEDIA: "false"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      whatsmiau-redis:
+        condition: service_healthy
+    networks:
+      - default
+      - dxchat
+    restart: unless-stopped
+
+  whatsmiau-redis:
+    image: redis:8-alpine
+    container_name: whatsmiau-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - dxchat-whatsmiau_whatsmiau_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  dxchat-whatsmiau_whatsmiau_data:
+    external: true
+  dxchat-whatsmiau_whatsmiau_redis_data:
+    external: true
+  go_pkg_mod:
+
+networks:
+  dxchat:
+    external: true
+    name: dxchat_default
