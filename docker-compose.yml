@@ -1,40 +1,59 @@
+name: dxchat-whatsmiau
+
 services:
   whatsmiau:
-    build: .
-    container_name: whatsmiau
+    image: ${WHATSMIAU_IMAGE:-gustavowlimadev/whatsmiau:develop}
+    container_name: dxchat-whatsmiau
+    environment:
+      PORT: "8080"
+      DEBUG_MODE: ${WHATSMIAU_DEBUG_MODE:-false}
+      DEBUG_WHATSMEOW: ${WHATSMIAU_DEBUG_WHATSMEOW:-false}
+      REDIS_URL: whatsmiau-redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_TLS: "false"
+      API_KEY: ${API_KEY:-default}
+      DIALECT_DB: sqlite3
+      DB_URL: "file:/app/data/data.db?_foreign_keys=on"
+      GCS_ENABLED: "false"
+      GCL_ENABLED: "false"
+      EMITTER_BUFFER_SIZE: ${WHATSMIAU_EMITTER_BUFFER_SIZE:-2048}
+      EMITTER_WORKERS: ${WHATSMIAU_EMITTER_WORKERS:-50}
+      HANDLER_SEMAPHORE_SIZE: ${WHATSMIAU_HANDLER_SEMAPHORE_SIZE:-512}
+      PROXY_ADDRESSES: ${WHATSMIAU_PROXY_ADDRESSES:-}
+      PROXY_STRATEGY: ${WHATSMIAU_PROXY_STRATEGY:-RANDOM}
+      PROXY_NO_MEDIA: ${WHATSMIAU_PROXY_NO_MEDIA:-false}
     ports:
-      - "8081:8081"
-    environment:
-      - REDIS_URL=redis:6379
-      - DB_URL=postgres://whatsmiau:123123123@localhost:5432/whatsmiau?sslmode=disable
+      - "${WHATSMIAU_PORT:-8080}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - whatsmeow:/app/data
+      - whatsmiau_data:/app/data
     depends_on:
-      - redis
+      whatsmiau-redis:
+        condition: service_healthy
+    networks:
+      - default
+      - dxchat
     restart: unless-stopped
 
-  redis:
-    image: redis:latest
-    container_name: redis
+  whatsmiau-redis:
+    image: redis:8-alpine
+    container_name: dxchat-whatsmiau-redis
+    command: redis-server --appendonly yes
     volumes:
-      - redis-data:/data
+      - whatsmiau_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     restart: unless-stopped
-
-  db:
-    image: postgres:latest
-    container_name: postgres
-    volumes:
-      - pg-data:/pg-data
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: whatsmiau
-      POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: whatsmiau
 
 volumes:
-  redis-data:
-    driver: local
-  whatsmeow:
-    driver: local
-  pg-data:
-    driver: local
+  whatsmiau_data:
+  whatsmiau_redis_data:
+
+networks:
+  dxchat:
+    external: true
+    name: dxchat_default
