@@ -556,6 +556,25 @@
             ],
             "type": "object"
         },
+        "dto.GroupSetMemberAddModeRequest": {
+            "properties": {
+                "mode": {
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ],
+                    "type": "string"
+                },
+                "groupJid": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "groupJid",
+                "mode"
+            ],
+            "type": "object"
+        },
         "dto.GroupToggleEphemeralRequest": {
             "properties": {
                 "expiration": {
@@ -3659,6 +3678,101 @@
                     }
                 ],
                 "summary": "Send group invite link via text to phone numbers",
+                "tags": [
+                    "Group"
+                ]
+            }
+        },
+        "/v1/group/setMemberAddMode/{instance}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "postV1GroupSetMemberAddModeByInstance",
+                "parameters": [
+                    {
+                        "description": "Instance ID",
+                        "in": "path",
+                        "name": "instance",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Mode payload",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupSetMemberAddModeRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.AuthenticationErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "summary": "Toggle who can add members (admins only or all)",
                 "tags": [
                     "Group"
                 ]
@@ -7598,6 +7712,101 @@
                     }
                 ],
                 "summary": "Send group invite link via text to phone numbers",
+                "tags": [
+                    "Group"
+                ]
+            }
+        },
+        "/v1/instance/{instance}/group/setMemberAddMode": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "postV1InstanceByInstanceGroupSetMemberAddMode",
+                "parameters": [
+                    {
+                        "description": "Instance ID",
+                        "in": "path",
+                        "name": "instance",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Mode payload",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupSetMemberAddModeRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.AuthenticationErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "summary": "Toggle who can add members (admins only or all)",
                 "tags": [
                     "Group"
                 ]

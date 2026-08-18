@@ -62,6 +62,12 @@ type GroupUpdateSettingRequest struct {
 	Action     string `json:"action" validate:"required,oneof=announcement not_announcement locked unlocked"`
 }
 
+type GroupSetMemberAddModeRequest struct {
+	InstanceID string `param:"instance" validate:"required" swaggerignore:"true"`
+	GroupJid   string `json:"groupJid" validate:"required"`
+	Mode       string `json:"mode" validate:"required,oneof=admin_add all_member_add"`
+}
+
 type GroupToggleEphemeralRequest struct {
 	InstanceID string `param:"instance" validate:"required" swaggerignore:"true"`
 	GroupJid   string `json:"groupJid" validate:"required"`

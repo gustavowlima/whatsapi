@@ -56,6 +56,7 @@ func DocumentedV1Operations() []Operation {
 		{http.MethodPost, "revokeInviteCode"},
 		{http.MethodPost, "updateParticipant"},
 		{http.MethodPost, "updateSetting"},
+		{http.MethodPost, "setMemberAddMode"},
 		{http.MethodPost, "toggleEphemeral"},
 		{http.MethodDelete, "leaveGroup"},
 	}

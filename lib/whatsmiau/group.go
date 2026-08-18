@@ -764,6 +764,32 @@ func (s *Whatsmiau) SetCommunityJoinApprovalMode(ctx context.Context, req *SetJo
 	return client.SetGroupJoinApprovalMode(ctx, *req.CommunityJID, req.Mode)
 }
 
+// ---------- Group: Member add mode ----------
+
+type SetMemberAddModeRequest struct {
+	InstanceID string
+	GroupJID   *types.JID
+	Mode       string
+}
+
+func (s *Whatsmiau) SetGroupMemberAddMode(ctx context.Context, req *SetMemberAddModeRequest) error {
+	client, ok := s.clients.Load(req.InstanceID)
+	if !ok {
+		return whatsmeow.ErrClientIsNil
+	}
+
+	var mode types.GroupMemberAddMode
+	switch req.Mode {
+	case "admin_add":
+		mode = types.GroupMemberAddModeAdmin
+	case "all_member_add":
+		mode = types.GroupMemberAddModeAllMember
+	default:
+		return fmt.Errorf("invalid mode: %s", req.Mode)
+	}
+	return client.SetGroupMemberAddMode(ctx, *req.GroupJID, mode)
+}
+
 type SetGroupAddModeRequest struct {
 	InstanceID  string
 	CommunityJID *types.JID
