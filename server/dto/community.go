@@ -36,3 +36,9 @@ type CommunityUpdateRequestParticipantsRequest struct {
 	Action       string   `json:"action" validate:"required,oneof=approve reject"`
 	Participants []string `json:"participants" validate:"omitempty,dive,required"`
 }
+
+type CommunitySetAddModeRequest struct {
+	InstanceID   string `param:"instance" validate:"required" swaggerignore:"true"`
+	CommunityJid string `json:"communityJid" validate:"required"`
+	Mode         string `json:"mode" validate:"required,oneof=admin_add all_member_add"`
+}

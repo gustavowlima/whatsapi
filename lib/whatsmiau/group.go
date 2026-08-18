@@ -765,9 +765,9 @@ func (s *Whatsmiau) SetCommunityJoinApprovalMode(ctx context.Context, req *SetJo
 }
 
 type SetGroupAddModeRequest struct {
-	InstanceID string
-	GroupJID   *types.JID
-	Mode       string
+	InstanceID  string
+	CommunityJID *types.JID
+	Mode        string
 }
 
 var ErrGroupAddModeRequiresCommunity = errors.New("group add mode requires a community parent")
@@ -808,7 +808,7 @@ func (s *Whatsmiau) SetGroupAddMode(ctx context.Context, req *SetGroupAddModeReq
 	if !ok {
 		return whatsmeow.ErrClientIsNil
 	}
-	return setGroupAddMode(ctx, client, *req.GroupJID, req.Mode)
+	return setGroupAddMode(ctx, client, *req.CommunityJID, req.Mode)
 }
 
 // ---------- Community: Request participants ----------

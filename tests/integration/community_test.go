@@ -183,9 +183,9 @@ func TestCommunityFlow(t *testing.T) {
 	})
 
 	t.Run("SetGroupAddMode_AdminOnly", func(t *testing.T) {
-		resp := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
-			"groupJid": communityJID,
-			"mode":     "admin_add",
+		resp := do(t, http.MethodPost, communityURL(t, "setGroupAddMode"), map[string]any{
+			"communityJid": communityJID,
+			"mode":         "admin_add",
 		})
 		defer drainClose(resp)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -193,9 +193,9 @@ func TestCommunityFlow(t *testing.T) {
 	})
 
 	t.Run("SetGroupAddMode_AllMembers", func(t *testing.T) {
-		resp := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
-			"groupJid": communityJID,
-			"mode":     "all_member_add",
+		resp := do(t, http.MethodPost, communityURL(t, "setGroupAddMode"), map[string]any{
+			"communityJid": communityJID,
+			"mode":         "all_member_add",
 		})
 		defer drainClose(resp)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -203,9 +203,9 @@ func TestCommunityFlow(t *testing.T) {
 	})
 
 	t.Run("SetGroupAddMode_RestoreAdminOnly", func(t *testing.T) {
-		restore := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
-			"groupJid": communityJID,
-			"mode":     "admin_add",
+		restore := do(t, http.MethodPost, communityURL(t, "setGroupAddMode"), map[string]any{
+			"communityJid": communityJID,
+			"mode":         "admin_add",
 		})
 		defer drainClose(restore)
 		require.Equal(t, http.StatusCreated, restore.StatusCode)
@@ -285,9 +285,9 @@ func TestCommunityValidation(t *testing.T) {
 	})
 
 	t.Run("SetGroupAddMode_InvalidMode", func(t *testing.T) {
-		resp := do(t, http.MethodPost, groupEvolutionURL(t, "setGroupAddMode"), map[string]any{
-			"groupJid": "123456789@g.us",
-			"mode":     "everyone",
+		resp := do(t, http.MethodPost, communityURL(t, "setGroupAddMode"), map[string]any{
+			"communityJid": "123456789@g.us",
+			"mode":         "everyone",
 		})
 		defer drainClose(resp)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)

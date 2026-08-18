@@ -348,9 +348,9 @@ definitions:
     - groupJid
     - numbers
     type: object
-  dto.GroupSetAddModeRequest:
+  dto.CommunitySetAddModeRequest:
     properties:
-      groupJid:
+      communityJid:
         type: string
       mode:
         enum:
@@ -358,7 +358,7 @@ definitions:
         - all_member_add
         type: string
     required:
-    - groupJid
+    - communityJid
     - mode
     type: object
   dto.GroupSubjectRequest:
@@ -2441,70 +2441,6 @@ paths:
       summary: Send group invite link via text to phone numbers
       tags:
       - Group
-  /v1/group/setGroupAddMode/{instance}:
-    post:
-      consumes:
-      - application/json
-      description: Use admin_add to restrict adding/linking groups to community admins,
-        or all_member_add to allow any community member.
-      operationId: postV1GroupSetGroupAddModeByInstance
-      parameters:
-      - description: Instance ID
-        in: path
-        name: instance
-        required: true
-        type: string
-      - description: Community group-add mode payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.GroupSetAddModeRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/utils.AuthenticationErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "410":
-          description: Gone
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "429":
-          description: Too Many Requests
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/utils.HTTPErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Set who can add groups to a community
-      tags:
-      - Community
   /v1/group/toggleEphemeral/{instance}:
     post:
       consumes:
@@ -3870,6 +3806,70 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Approve or reject pending join requests
+      tags:
+      - Community
+  /v1/instance/{instance}/community/setGroupAddMode:
+    post:
+      consumes:
+      - application/json
+      description: Use admin_add to restrict adding/linking groups to community admins,
+        or all_member_add to allow any community member.
+      operationId: postV1InstanceByInstanceCommunitySetGroupAddMode
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instance
+        required: true
+        type: string
+      - description: Community group-add mode payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CommunitySetAddModeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AuthenticationErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set who can add groups to a community
       tags:
       - Community
   /v1/instance/{instance}/community/setJoinApprovalMode:
