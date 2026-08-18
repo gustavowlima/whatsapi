@@ -3677,13 +3677,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/instance/{instance}/community/setJoinApprovalMode": {
+        "/v1/instance/{instance}/community/setGroupAddMode": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Use admin_add to restrict adding/linking groups to community admins, or all_member_add to allow any community member.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3693,7 +3694,7 @@ const docTemplate = `{
                 "tags": [
                     "Community"
                 ],
-                "summary": "Toggle join-approval mode for a community",
+                "summary": "Set who can add groups to a community",
                 "parameters": [
                     {
                         "type": "string",
@@ -3703,12 +3704,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Mode payload",
+                        "description": "Community group-add mode payload",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CommunitySetJoinApprovalModeRequest"
+                            "$ref": "#/definitions/dto.CommunitySetAddModeRequest"
                         }
                     }
                 ],
@@ -3765,7 +3766,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/instance/{instance}/community/setMemberAddMode": {
+        "/v1/instance/{instance}/community/setJoinApprovalMode": {
             "post": {
                 "security": [
                     {
@@ -3781,7 +3782,7 @@ const docTemplate = `{
                 "tags": [
                     "Community"
                 ],
-                "summary": "Toggle who can add members (admins only or all)",
+                "summary": "Toggle join-approval mode for a community",
                 "parameters": [
                     {
                         "type": "string",
@@ -3796,7 +3797,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CommunitySetMemberAddModeRequest"
+                            "$ref": "#/definitions/dto.CommunitySetJoinApprovalModeRequest"
                         }
                     }
                 ],
@@ -7240,25 +7241,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CommunitySetMemberAddModeRequest": {
-            "type": "object",
-            "required": [
-                "communityJid",
-                "mode"
-            ],
-            "properties": {
-                "communityJid": {
-                    "type": "string"
-                },
-                "mode": {
-                    "type": "string",
-                    "enum": [
-                        "admin_add",
-                        "all_member_add"
-                    ]
-                }
-            }
-        },
         "dto.CommunityUpdateRequestParticipantsRequest": {
             "type": "object",
             "required": [
@@ -7372,7 +7354,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -7396,7 +7378,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -7422,7 +7404,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -7665,6 +7647,25 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CommunitySetAddModeRequest": {
+            "type": "object",
+            "required": [
+                "communityJid",
+                "mode"
+            ],
+            "properties": {
+                "communityJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ]
+                }
+            }
+        },
         "dto.GroupSubjectRequest": {
             "type": "object",
             "required": [
@@ -7677,7 +7678,7 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string",
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1
                 }
             }
@@ -9275,6 +9276,9 @@ const docTemplate = `{
                 },
                 "ephemeral": {
                     "type": "integer"
+                },
+                "groupAddMode": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"

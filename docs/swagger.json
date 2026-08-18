@@ -114,25 +114,6 @@
             ],
             "type": "object"
         },
-        "dto.CommunitySetMemberAddModeRequest": {
-            "properties": {
-                "communityJid": {
-                    "type": "string"
-                },
-                "mode": {
-                    "enum": [
-                        "admin_add",
-                        "all_member_add"
-                    ],
-                    "type": "string"
-                }
-            },
-            "required": [
-                "communityJid",
-                "mode"
-            ],
-            "type": "object"
-        },
         "dto.CommunityUpdateRequestParticipantsRequest": {
             "properties": {
                 "action": {
@@ -241,7 +222,7 @@
                     "type": "string"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -263,7 +244,7 @@
                     "type": "array"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -290,7 +271,7 @@
                     "type": "boolean"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -539,13 +520,32 @@
             ],
             "type": "object"
         },
+        "dto.CommunitySetAddModeRequest": {
+            "properties": {
+                "communityJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "communityJid",
+                "mode"
+            ],
+            "type": "object"
+        },
         "dto.GroupSubjectRequest": {
             "properties": {
                 "groupJid": {
                     "type": "string"
                 },
                 "subject": {
-                    "maxLength": 25,
+                    "maxLength": 100,
                     "minLength": 1,
                     "type": "string"
                 }
@@ -2148,6 +2148,9 @@
                 },
                 "ephemeral": {
                     "type": "integer"
+                },
+                "groupAddMode": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -6314,6 +6317,102 @@
                 ]
             }
         },
+        "/v1/instance/{instance}/community/setGroupAddMode": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Use admin_add to restrict adding/linking groups to community admins, or all_member_add to allow any community member.",
+                "operationId": "postV1InstanceByInstanceCommunitySetGroupAddMode",
+                "parameters": [
+                    {
+                        "description": "Instance ID",
+                        "in": "path",
+                        "name": "instance",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Community group-add mode payload",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CommunitySetAddModeRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.AuthenticationErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "summary": "Set who can add groups to a community",
+                "tags": [
+                    "Community"
+                ]
+            }
+        },
         "/v1/instance/{instance}/community/setJoinApprovalMode": {
             "post": {
                 "consumes": [
@@ -6404,101 +6503,6 @@
                     }
                 ],
                 "summary": "Toggle join-approval mode for a community",
-                "tags": [
-                    "Community"
-                ]
-            }
-        },
-        "/v1/instance/{instance}/community/setMemberAddMode": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "operationId": "postV1InstanceByInstanceCommunitySetMemberAddMode",
-                "parameters": [
-                    {
-                        "description": "Instance ID",
-                        "in": "path",
-                        "name": "instance",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "description": "Mode payload",
-                        "in": "body",
-                        "name": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CommunitySetMemberAddModeRequest"
-                        }
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "additionalProperties": true,
-                            "type": "object"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/utils.AuthenticationErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "410": {
-                        "description": "Gone",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "429": {
-                        "description": "Too Many Requests",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPErrorResponse"
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "summary": "Toggle who can add members (admins only or all)",
                 "tags": [
                     "Community"
                 ]

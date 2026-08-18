@@ -40,6 +40,12 @@ func mapGroupError(err error) (int, string) {
 		return http.StatusBadRequest, "invite link invalid"
 	case errors.Is(err, whatsmeow.ErrGroupInviteLinkUnauthorized):
 		return http.StatusForbidden, "unauthorized to access invite link"
+	case errors.Is(err, whatsmeow.ErrIQBadRequest):
+		return http.StatusBadRequest, "WhatsApp rejected the group operation"
+	case errors.Is(err, whatsmeow.ErrIQNotAuthorized), errors.Is(err, whatsmeow.ErrIQForbidden):
+		return http.StatusForbidden, "WhatsApp rejected the group permissions"
+	case errors.Is(err, whatsmiau.ErrGroupAddModeRequiresCommunity):
+		return http.StatusBadRequest, "group add mode requires a community parent"
 	case errors.Is(err, whatsmeow.ErrIQRateOverLimit):
 		return http.StatusTooManyRequests, "rate limit exceeded, try again later"
 	default:
