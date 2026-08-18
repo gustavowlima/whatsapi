@@ -604,6 +604,50 @@ func (s *Group) UpdateParticipant(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, resp)
 }
 
+// SetMemberAddMode godoc
+// @Summary      Toggle who can add members (admins only or all)
+// @Description  Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.
+// @Tags         Group
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path  string true  "Instance ID"
+// @Param        body      body  dto.GroupSetMemberAddModeRequest true  "Mode payload"
+// @Success      201       {object}  map[string]interface{}
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      403       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      410       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      429       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/group/setMemberAddMode [post]
+// @Router       /v1/group/setMemberAddMode/{instance} [post]
+func (s *Group) SetMemberAddMode(ctx echo.Context) error {
+	var request dto.GroupSetMemberAddModeRequest
+	if err := ctx.Bind(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request body")
+	}
+	if err := validator.New().Struct(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid request body")
+	}
+	groupJid, err := parseGroupJID(request.GroupJid)
+	if err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid groupJid")
+	}
+
+	if err := s.whatsmiau.SetGroupMemberAddMode(ctx.Request().Context(), &whatsmiau.SetMemberAddModeRequest{
+		InstanceID: request.InstanceID,
+		GroupJID:   groupJid,
+		Mode:       request.Mode,
+	}); err != nil {
+		zap.L().Error("Whatsmiau.SetGroupMemberAddMode failed", zap.Error(err))
+		code, msg := mapGroupError(err)
+		return utils.HTTPFail(ctx, code, err, msg)
+	}
+	return ctx.JSON(http.StatusCreated, map[string]interface{}{})
+}
+
 // UpdateSetting godoc
 // @Summary      Update group setting (announce/locked)
 // @Tags         Group
