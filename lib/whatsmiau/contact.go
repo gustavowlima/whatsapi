@@ -79,24 +79,73 @@ func (s *Whatsmiau) FindContact(ctx context.Context, req *FindContactRequest) (*
 		IsWhatsApp: true,
 	}
 
-	if client.Store != nil && client.Store.Contacts != nil {
-		info, err := client.Store.Contacts.GetContact(ctx, target)
-		if err == nil && info.Found {
-			resp.Found = true
-			resp.FirstName = info.FirstName
-			resp.FullName = info.FullName
-			resp.PushName = info.PushName
-			resp.BusinessName = info.BusinessName
-			resp.RedactedPhone = info.RedactedPhone
+	var contactInfo *types.ContactInfo
 
-			if info.FullName != "" {
-				resp.Name = info.FullName
-			} else if info.FirstName != "" {
-				resp.Name = info.FirstName
-			} else if info.BusinessName != "" {
-				resp.Name = info.BusinessName
-			} else if info.PushName != "" {
-				resp.Name = info.PushName
+	if client.Store != nil && client.Store.Contacts != nil {
+		// 1. Try target JID
+		if info, err := client.Store.Contacts.GetContact(ctx, target); err == nil && info.Found {
+			contactInfo = &info
+		}
+		// 2. Try raw requested number JID if different
+		if contactInfo == nil && req.Number != nil && *req.Number != target {
+			if info, err := client.Store.Contacts.GetContact(ctx, *req.Number); err == nil && info.Found {
+				contactInfo = &info
+			}
+		}
+		// 3. Try Brazilian alternate JID
+		if contactInfo == nil {
+			if alt := buildBrazilianAlternate(target.User); alt != "" {
+				altJID := types.NewJID(alt, types.DefaultUserServer)
+				if info, err := client.Store.Contacts.GetContact(ctx, altJID); err == nil && info.Found {
+					contactInfo = &info
+				}
+			}
+		}
+		// 4. Try searching all contacts in store for matching user or phone digits
+		if contactInfo == nil {
+			if all, err := client.Store.Contacts.GetAllContacts(ctx); err == nil {
+				targetDigits := onlyDigits(target.User)
+				for j, info := range all {
+					jDigits := onlyDigits(j.User)
+					if j == target || (targetDigits != "" && (jDigits == targetDigits || j.User == target.User)) {
+						if info.FullName != "" || info.FirstName != "" || info.PushName != "" || info.BusinessName != "" {
+							contactInfo = &info
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if contactInfo != nil {
+		resp.Found = true
+		resp.FirstName = contactInfo.FirstName
+		resp.FullName = contactInfo.FullName
+		resp.PushName = contactInfo.PushName
+		resp.BusinessName = contactInfo.BusinessName
+		resp.RedactedPhone = contactInfo.RedactedPhone
+
+		if contactInfo.FullName != "" {
+			resp.Name = contactInfo.FullName
+		} else if contactInfo.FirstName != "" {
+			resp.Name = contactInfo.FirstName
+		} else if contactInfo.BusinessName != "" {
+			resp.Name = contactInfo.BusinessName
+		} else if contactInfo.PushName != "" {
+			resp.Name = contactInfo.PushName
+		}
+	}
+
+	// 5. If name is still empty, try client.GetUserInfo to fetch verified name
+	if resp.Name == "" {
+		if users, err := client.GetUserInfo(ctx, []types.JID{target}); err == nil {
+			if uInfo, ok := users[target]; ok && uInfo.VerifiedName != nil && uInfo.VerifiedName.Details != nil {
+				vName := uInfo.VerifiedName.Details.GetVerifiedName()
+				if vName != "" {
+					resp.Name = vName
+					resp.BusinessName = vName
+				}
 			}
 		}
 	}
