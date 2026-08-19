@@ -1,6 +1,7 @@
 package whatsmiau
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -163,3 +164,53 @@ func (s *Whatsmiau) DeleteMessageForEveryone(ctx context.Context, req *DeleteMes
 	_, err := client.SendMessage(ctx, chat, msg)
 	return err
 }
+
+type FetchProfilePictureRequest struct {
+	InstanceID string     `json:"instance_id"`
+	Number     *types.JID `json:"number"`
+	Preview    bool       `json:"preview"`
+}
+
+type FetchProfilePictureResponse struct {
+	Wuid              string `json:"wuid"`
+	ProfilePictureUrl string `json:"profilePictureUrl,omitempty"`
+}
+
+// FetchProfilePicture returns the profile picture URL of a contact or group.
+// Works for both types of JID: @s.whatsapp.net (contact) and @g.us (group).
+// Returns empty ProfilePictureUrl (no error) if the target has no picture
+// or has hidden it via privacy settings — this must NOT be treated as a failure.
+func (s *Whatsmiau) FetchProfilePicture(ctx context.Context, req *FetchProfilePictureRequest) (*FetchProfilePictureResponse, error) {
+	client, ok := s.clients.Load(req.InstanceID)
+	if !ok || client == nil {
+		return nil, whatsmeow.ErrClientIsNil
+	}
+
+	if !client.IsConnected() {
+		return nil, fmt.Errorf("client not connected for instance %s", req.InstanceID)
+	}
+
+	target := s.resolveJID(ctx, client, *req.Number)
+
+	// isCommunity só é relevante para comunidades (grupo pai). Para grupos
+	// normais e contatos, deixar false — whatsmeow decide o comportamento
+	// certo com base no Server do JID (g.us vs s.whatsapp.net).
+	pic, err := client.GetProfilePictureInfo(ctx, target, &whatsmeow.GetProfilePictureParams{
+		Preview:     req.Preview,
+		IsCommunity: false,
+	})
+	if err != nil {
+		if errors.Is(err, whatsmeow.ErrProfilePictureUnauthorized) || errors.Is(err, whatsmeow.ErrProfilePictureNotSet) {
+			return &FetchProfilePictureResponse{Wuid: target.String()}, nil
+		}
+		return nil, err
+	}
+
+	resp := &FetchProfilePictureResponse{Wuid: target.String()}
+	if pic != nil {
+		resp.ProfilePictureUrl = pic.URL
+	}
+
+	return resp, nil
+}
+

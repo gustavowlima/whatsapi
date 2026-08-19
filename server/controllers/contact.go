@@ -14,6 +14,20 @@ type Contact struct{ whatsmiau *whatsmiau.Whatsmiau }
 
 func NewContacts(service *whatsmiau.Whatsmiau) *Contact { return &Contact{whatsmiau: service} }
 
+// List godoc
+// @Summary      List contacts
+// @Description  Returns the contact cache for the instance
+// @Tags         Contact
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path      string                     true  "Instance ID"
+// @Success      200       {array}   whatsmiau.ContactResponse
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/contact [get]
+// @Router       /v1/contact/fetchAll/{instance} [get]
 func (s *Contact) List(ctx echo.Context) error {
 	var request dto.ListContactsQuery
 	if err := ctx.Bind(&request); err != nil {
@@ -28,3 +42,45 @@ func (s *Contact) List(ctx echo.Context) error {
 	}
 	return ctx.JSON(http.StatusOK, contacts)
 }
+
+// FindContact godoc
+// @Summary      Find contact details
+// @Description  Fetches contact details (name, pushName, etc.) and profile picture URL for a specific contact or group.
+// @Tags         Contact
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path      string                  true  "Instance ID"
+// @Param        body      body      dto.FindContactRequest  true  "Contact request parameters"
+// @Success      200       {object}  whatsmiau.FindContactResponse
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      404       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/contact/find [post]
+// @Router       /v1/instance/{instance}/chat/findContact [post]
+// @Router       /v1/chat/findContact/{instance} [post]
+func (s *Contact) FindContact(ctx echo.Context) error {
+	var request dto.FindContactRequest
+	if err := ctx.Bind(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request")
+	}
+	if err := validator.New().Struct(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid request")
+	}
+
+	jid, err := numberToJid(request.Number)
+	if err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid phone number or JID")
+	}
+
+	contact, err := s.whatsmiau.FindContact(ctx.Request().Context(), &whatsmiau.FindContactRequest{
+		InstanceID: request.InstanceID,
+		Number:     jid,
+	})
+	if err != nil {
+		return utils.HTTPFail(ctx, http.StatusNotFound, err, "instance is not connected")
+	}
+
+	return ctx.JSON(http.StatusOK, contact)
+}
+

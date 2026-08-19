@@ -212,6 +212,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/chat/fetchProfilePictureUrl/{instance}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches the WhatsApp profile picture URL. Accepts either a phone number (contact) or a group JID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Fetch profile picture URL (contact or group)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Number or group JID to fetch",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FetchProfilePictureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/whatsmiau.FetchProfilePictureResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/chat/findContact/{instance}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches contact details (name, pushName, etc.) and profile picture URL for a specific contact or group.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contact"
+                ],
+                "summary": "Find contact details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contact request parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FindContactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/whatsmiau.FindContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/chat/markMessageAsRead/{instance}": {
             "post": {
                 "security": [
@@ -402,6 +530,64 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/contact/fetchAll/{instance}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns the contact cache for the instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contact"
+                ],
+                "summary": "List contacts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/whatsmiau.ContactResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/utils.HTTPErrorResponse"
                         }
@@ -1254,6 +1440,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3116,6 +3303,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/instance/{instance}/chat/fetchProfilePictureUrl": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches the WhatsApp profile picture URL. Accepts either a phone number (contact) or a group JID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Fetch profile picture URL (contact or group)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Number or group JID to fetch",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FetchProfilePictureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/whatsmiau.FetchProfilePictureResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/instance/{instance}/chat/findContact": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches contact details (name, pushName, etc.) and profile picture URL for a specific contact or group.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contact"
+                ],
+                "summary": "Find contact details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contact request parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FindContactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/whatsmiau.FindContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/instance/{instance}/chat/presence": {
             "post": {
                 "security": [
@@ -4115,6 +4430,128 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/instance/{instance}/contact": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns the contact cache for the instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contact"
+                ],
+                "summary": "List contacts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/whatsmiau.ContactResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/instance/{instance}/contact/find": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches contact details (name, pushName, etc.) and profile picture URL for a specific contact or group.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contact"
+                ],
+                "summary": "Find contact details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contact request parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FindContactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/whatsmiau.FindContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/instance/{instance}/group/acceptInviteCode": {
             "get": {
                 "security": [
@@ -4960,6 +5397,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7403,6 +7841,25 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CommunitySetAddModeRequest": {
+            "type": "object",
+            "required": [
+                "communityJid",
+                "mode"
+            ],
+            "properties": {
+                "communityJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ]
+                }
+            }
+        },
         "dto.CommunitySetJoinApprovalModeRequest": {
             "type": "object",
             "required": [
@@ -7752,6 +8209,30 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.FetchProfilePictureRequest": {
+            "type": "object",
+            "required": [
+                "number"
+            ],
+            "properties": {
+                "number": {
+                    "description": "aceita número de contato OU groupJid (ex: \"120363012345678901@g.us\")",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.FindContactRequest": {
+            "type": "object",
+            "required": [
+                "number"
+            ],
+            "properties": {
+                "number": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
         "dto.FindWebhookResponse": {
             "type": "object",
             "properties": {
@@ -7823,14 +8304,14 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CommunitySetAddModeRequest": {
+        "dto.GroupSetMemberAddModeRequest": {
             "type": "object",
             "required": [
-                "communityJid",
+                "groupJid",
                 "mode"
             ],
             "properties": {
-                "communityJid": {
+                "groupJid": {
                     "type": "string"
                 },
                 "mode": {
@@ -7856,27 +8337,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 1
-                }
-            }
-        },
-        "dto.GroupSetMemberAddModeRequest": {
-            "type": "object",
-            "required": [
-                "groupJid",
-                "mode"
-            ],
-            "properties": {
-                "action": {
-                    "type": "string",
-                    "enum": [
-                        "announcement",
-                        "not_announcement",
-                        "locked",
-                        "unlocked"
-                    ]
-                },
-                "groupJid": {
-                    "type": "string"
                 }
             }
         },
@@ -9441,6 +9901,81 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "groupJid": {
+                    "type": "string"
+                }
+            }
+        },
+        "whatsmiau.ContactResponse": {
+            "type": "object",
+            "properties": {
+                "businessName": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "found": {
+                    "type": "boolean"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "jid": {
+                    "type": "string"
+                },
+                "pushName": {
+                    "type": "string"
+                },
+                "redactedPhone": {
+                    "type": "string"
+                }
+            }
+        },
+        "whatsmiau.FetchProfilePictureResponse": {
+            "type": "object",
+            "properties": {
+                "profilePictureUrl": {
+                    "type": "string"
+                },
+                "wuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "whatsmiau.FindContactResponse": {
+            "type": "object",
+            "properties": {
+                "businessName": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "found": {
+                    "type": "boolean"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isWhatsApp": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "profilePictureUrl": {
+                    "type": "string"
+                },
+                "pushName": {
+                    "type": "string"
+                },
+                "redactedPhone": {
+                    "type": "string"
+                },
+                "wuid": {
                     "type": "string"
                 }
             }
