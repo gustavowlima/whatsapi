@@ -342,6 +342,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/chat/updateMessage/{instance}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Edits a previously sent text message, mirroring Evolution API's POST /chat/updateMessage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Edit a message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message edit parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/chat/whatsappNumbers/{instance}": {
             "post": {
                 "security": [
@@ -1254,6 +1318,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4960,6 +5025,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7403,6 +7469,25 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CommunitySetAddModeRequest": {
+            "type": "object",
+            "required": [
+                "communityJid",
+                "mode"
+            ],
+            "properties": {
+                "communityJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ]
+                }
+            }
+        },
         "dto.CommunitySetJoinApprovalModeRequest": {
             "type": "object",
             "required": [
@@ -7823,14 +7908,14 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CommunitySetAddModeRequest": {
+        "dto.GroupSetMemberAddModeRequest": {
             "type": "object",
             "required": [
-                "communityJid",
+                "groupJid",
                 "mode"
             ],
             "properties": {
-                "communityJid": {
+                "groupJid": {
                     "type": "string"
                 },
                 "mode": {
@@ -7856,27 +7941,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 1
-                }
-            }
-        },
-        "dto.GroupSetMemberAddModeRequest": {
-            "type": "object",
-            "required": [
-                "groupJid",
-                "mode"
-            ],
-            "properties": {
-                "action": {
-                    "type": "string",
-                    "enum": [
-                        "announcement",
-                        "not_announcement",
-                        "locked",
-                        "unlocked"
-                    ]
-                },
-                "groupJid": {
-                    "type": "string"
                 }
             }
         },
@@ -9381,6 +9445,70 @@ const docTemplate = `{
                 },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
+                }
+            }
+        },
+        "dto.UpdateMessageKey": {
+            "type": "object",
+            "required": [
+                "fromMe",
+                "id",
+                "remoteJid"
+            ],
+            "properties": {
+                "fromMe": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "participant": {
+                    "type": "string"
+                },
+                "remoteJid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdateMessageRequest": {
+            "type": "object",
+            "required": [
+                "key",
+                "number",
+                "text"
+            ],
+            "properties": {
+                "key": {
+                    "$ref": "#/definitions/dto.UpdateMessageKey"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdateMessageResponse": {
+            "type": "object",
+            "properties": {
+                "instanceId": {
+                    "type": "string"
+                },
+                "key": {
+                    "$ref": "#/definitions/dto.MessageResponseKey"
+                },
+                "message": {
+                    "$ref": "#/definitions/dto.SendTextResponseMessage"
+                },
+                "messageTimestamp": {
+                    "type": "integer"
+                },
+                "messageType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

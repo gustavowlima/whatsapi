@@ -100,6 +100,25 @@
             ],
             "type": "object"
         },
+        "dto.CommunitySetAddModeRequest": {
+            "properties": {
+                "communityJid": {
+                    "type": "string"
+                },
+                "mode": {
+                    "enum": [
+                        "admin_add",
+                        "all_member_add"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "communityJid",
+                "mode"
+            ],
+            "type": "object"
+        },
         "dto.CommunitySetJoinApprovalModeRequest": {
             "properties": {
                 "communityJid": {
@@ -520,9 +539,9 @@
             ],
             "type": "object"
         },
-        "dto.CommunitySetAddModeRequest": {
+        "dto.GroupSetMemberAddModeRequest": {
             "properties": {
-                "communityJid": {
+                "groupJid": {
                     "type": "string"
                 },
                 "mode": {
@@ -534,7 +553,7 @@
                 }
             },
             "required": [
-                "communityJid",
+                "groupJid",
                 "mode"
             ],
             "type": "object"
@@ -553,25 +572,6 @@
             "required": [
                 "groupJid",
                 "subject"
-            ],
-            "type": "object"
-        },
-        "dto.GroupSetMemberAddModeRequest": {
-            "properties": {
-                "mode": {
-                    "enum": [
-                        "admin_add",
-                        "all_member_add"
-                    ],
-                    "type": "string"
-                },
-                "groupJid": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "groupJid",
-                "mode"
             ],
             "type": "object"
         },
@@ -2079,6 +2079,70 @@
             },
             "type": "object"
         },
+        "dto.UpdateMessageKey": {
+            "properties": {
+                "fromMe": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "participant": {
+                    "type": "string"
+                },
+                "remoteJid": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "fromMe",
+                "id",
+                "remoteJid"
+            ],
+            "type": "object"
+        },
+        "dto.UpdateMessageRequest": {
+            "properties": {
+                "key": {
+                    "$ref": "#/definitions/dto.UpdateMessageKey"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "key",
+                "number",
+                "text"
+            ],
+            "type": "object"
+        },
+        "dto.UpdateMessageResponse": {
+            "properties": {
+                "instanceId": {
+                    "type": "string"
+                },
+                "key": {
+                    "$ref": "#/definitions/dto.MessageResponseKey"
+                },
+                "message": {
+                    "$ref": "#/definitions/dto.SendTextResponseMessage"
+                },
+                "messageTimestamp": {
+                    "type": "integer"
+                },
+                "messageType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "models.InstanceWebhook": {
             "properties": {
                 "base64": {
@@ -2696,6 +2760,77 @@
                     }
                 ],
                 "summary": "Send chat presence (typing indicator)",
+                "tags": [
+                    "Chat"
+                ]
+            }
+        },
+        "/v1/chat/updateMessage/{instance}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Edits a previously sent text message, mirroring Evolution API's POST /chat/updateMessage",
+                "operationId": "postV1ChatUpdateMessageByInstance",
+                "parameters": [
+                    {
+                        "description": "Instance ID",
+                        "in": "path",
+                        "name": "instance",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Message edit parameters",
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMessageRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.AuthenticationErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "summary": "Edit a message",
                 "tags": [
                     "Chat"
                 ]
@@ -3688,6 +3823,7 @@
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.",
                 "operationId": "postV1GroupSetMemberAddModeByInstance",
                 "parameters": [
                     {
@@ -7722,6 +7858,7 @@
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Accepts a regular group or subgroup JID. Community parent JIDs are rejected by WhatsApp.",
                 "operationId": "postV1InstanceByInstanceGroupSetMemberAddMode",
                 "parameters": [
                     {
