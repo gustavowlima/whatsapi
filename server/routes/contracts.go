@@ -35,7 +35,7 @@ func DocumentedV1Operations() []Operation {
 		appendOperation(http.MethodPost, "/v1/message/"+action+"/{instance}")
 	}
 
-	appendOperation(http.MethodPost, "/v1/instance/{instance}/chat/presence", "/v1/instance/{instance}/chat/read-messages", "/v1/chat/markMessageAsRead/{instance}", "/v1/chat/sendPresence/{instance}", "/v1/chat/whatsappNumbers/{instance}")
+	appendOperation(http.MethodPost, "/v1/instance/{instance}/chat/presence", "/v1/instance/{instance}/chat/read-messages", "/v1/chat/markMessageAsRead/{instance}", "/v1/chat/sendPresence/{instance}", "/v1/chat/whatsappNumbers/{instance}", "/v1/chat/updateMessage/{instance}")
 	appendOperation(http.MethodDelete, "/v1/instance/{instance}/chat/deleteMessageForEveryone", "/v1/chat/deleteMessageForEveryone/{instance}")
 
 	groupActions := []struct {

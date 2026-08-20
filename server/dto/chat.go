@@ -48,3 +48,29 @@ type DeleteMessageForEveryoneRequest struct {
 	Participant string `json:"participant,omitempty" validate:"omitempty"`
 	FromMe      bool   `json:"fromMe"`
 }
+
+// UpdateMessageRequest mirrors Evolution API's POST /chat/updateMessage
+// payload: the destination number, the new text and the key of the message
+// being edited.
+type UpdateMessageRequest struct {
+	InstanceID string            `param:"instance" validate:"required" swaggerignore:"true"`
+	Number     string            `json:"number" validate:"required"`
+	Text       string            `json:"text" validate:"required"`
+	Key        UpdateMessageKey  `json:"key" validate:"required"`
+}
+
+type UpdateMessageKey struct {
+	Id          string `json:"id" validate:"required"`
+	RemoteJid   string `json:"remoteJid" validate:"required"`
+	FromMe      *bool  `json:"fromMe" validate:"required"`
+	Participant string `json:"participant,omitempty"`
+}
+
+type UpdateMessageResponse struct {
+	Key              MessageResponseKey      `json:"key"`
+	Status           string                  `json:"status"`
+	Message          SendTextResponseMessage `json:"message"`
+	MessageType      string                  `json:"messageType"`
+	MessageTimestamp int                     `json:"messageTimestamp"`
+	InstanceId       string                  `json:"instanceId"`
+}
