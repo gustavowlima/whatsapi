@@ -25,5 +25,6 @@ func ChatEVO(group *echo.Group) {
 	group.POST("/markMessageAsRead/:instance", controller.ReadMessages)
 	group.POST("/sendPresence/:instance", controller.SendChatPresence)
 	group.POST("/whatsappNumbers/:instance", controller.NumberExists)
+	group.POST("/updateMessage/:instance", controller.UpdateMessage)
 	group.DELETE("/deleteMessageForEveryone/:instance", controller.DeleteMessageForEveryone)
 }

@@ -247,3 +247,64 @@ func (s *Chat) DeleteMessageForEveryone(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, map[string]interface{}{})
 }
+
+// UpdateMessage godoc
+// @Summary      Edit a message
+// @Description  Edits a previously sent text message, mirroring Evolution API's POST /chat/updateMessage
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path      string                    true  "Instance ID"
+// @Param        body      body      dto.UpdateMessageRequest   true  "Message edit parameters"
+// @Success      200       {object}  dto.UpdateMessageResponse
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/chat/updateMessage/{instance} [post]
+func (s *Chat) UpdateMessage(ctx echo.Context) error {
+	var request dto.UpdateMessageRequest
+	if err := ctx.Bind(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request body")
+	}
+
+	if err := validator.New().Struct(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid request body")
+	}
+
+	jid, err := numberToJid(request.Number)
+	if err != nil {
+		zap.L().Error("error converting number to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
+	}
+
+	c := ctx.Request().Context()
+	res, err := s.whatsmiau.UpdateMessage(c, &whatsmiau.UpdateMessage{
+		Text:       request.Text,
+		InstanceID: request.InstanceID,
+		RemoteJID:  jid,
+		Key: &whatsmiau.EditMessageKey{
+			ID:          request.Key.Id,
+			RemoteJID:   request.Key.RemoteJid,
+			FromMe:      request.Key.FromMe != nil && *request.Key.FromMe,
+			Participant: request.Key.Participant,
+		},
+	})
+	if err != nil {
+		zap.L().Error("Whatsmiau.UpdateMessage failed", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusInternalServerError, err, "failed to edit message")
+	}
+
+	return ctx.JSON(http.StatusOK, dto.UpdateMessageResponse{
+		Key: dto.MessageResponseKey{
+			RemoteJid: request.Number,
+			FromMe:    true,
+			Id:        res.ID,
+		},
+		Status:           "sent",
+		Message:          dto.SendTextResponseMessage{Conversation: request.Text},
+		MessageType:      "conversation",
+		MessageTimestamp: int(res.CreatedAt.Unix()),
+		InstanceId:       request.InstanceID,
+	})
+}
