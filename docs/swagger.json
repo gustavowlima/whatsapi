@@ -218,9 +218,6 @@
                 "syncFullHistory": {
                     "type": "boolean"
                 },
-                "syncRecentHistory": {
-                    "type": "boolean"
-                },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
                 }
@@ -354,9 +351,6 @@
                 "syncFullHistory": {
                     "type": "boolean"
                 },
-                "syncRecentHistory": {
-                    "type": "boolean"
-                },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
                 }
@@ -411,9 +405,6 @@
                     "type": "boolean"
                 },
                 "syncFullHistory": {
-                    "type": "boolean"
-                },
-                "syncRecentHistory": {
                     "type": "boolean"
                 },
                 "webhook": {
@@ -696,9 +687,6 @@
                     "type": "boolean"
                 },
                 "syncFullHistory": {
-                    "type": "boolean"
-                },
-                "syncRecentHistory": {
                     "type": "boolean"
                 },
                 "webhook": {
@@ -1920,9 +1908,6 @@
                 "base64": {
                     "type": "boolean"
                 },
-                "byEvents": {
-                    "type": "boolean"
-                },
                 "enabled": {
                     "type": "boolean"
                 },
@@ -2070,9 +2055,6 @@
                 "syncFullHistory": {
                     "type": "boolean"
                 },
-                "syncRecentHistory": {
-                    "type": "boolean"
-                },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
                 }
@@ -2146,9 +2128,6 @@
         "models.InstanceWebhook": {
             "properties": {
                 "base64": {
-                    "type": "boolean"
-                },
-                "byEvents": {
                     "type": "boolean"
                 },
                 "enabled": {

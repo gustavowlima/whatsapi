@@ -7588,9 +7588,6 @@ const docTemplate = `{
                 "syncFullHistory": {
                     "type": "boolean"
                 },
-                "syncRecentHistory": {
-                    "type": "boolean"
-                },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
                 }
@@ -7724,9 +7721,6 @@ const docTemplate = `{
                 "syncFullHistory": {
                     "type": "boolean"
                 },
-                "syncRecentHistory": {
-                    "type": "boolean"
-                },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
                 }
@@ -7781,9 +7775,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "syncFullHistory": {
-                    "type": "boolean"
-                },
-                "syncRecentHistory": {
                     "type": "boolean"
                 },
                 "webhook": {
@@ -8066,9 +8057,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "syncFullHistory": {
-                    "type": "boolean"
-                },
-                "syncRecentHistory": {
                     "type": "boolean"
                 },
                 "webhook": {
@@ -9290,9 +9278,6 @@ const docTemplate = `{
                 "base64": {
                     "type": "boolean"
                 },
-                "byEvents": {
-                    "type": "boolean"
-                },
                 "enabled": {
                     "type": "boolean"
                 },
@@ -9440,9 +9425,6 @@ const docTemplate = `{
                 "syncFullHistory": {
                     "type": "boolean"
                 },
-                "syncRecentHistory": {
-                    "type": "boolean"
-                },
                 "webhook": {
                     "$ref": "#/definitions/models.InstanceWebhook"
                 }
@@ -9516,9 +9498,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "base64": {
-                    "type": "boolean"
-                },
-                "byEvents": {
                     "type": "boolean"
                 },
                 "enabled": {

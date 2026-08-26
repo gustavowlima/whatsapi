@@ -147,8 +147,6 @@ definitions:
         type: boolean
       syncFullHistory:
         type: boolean
-      syncRecentHistory:
-        type: boolean
       webhook:
         $ref: '#/definitions/models.InstanceWebhook'
     type: object
@@ -239,8 +237,6 @@ definitions:
         type: boolean
       syncFullHistory:
         type: boolean
-      syncRecentHistory:
-        type: boolean
       webhook:
         $ref: '#/definitions/models.InstanceWebhook'
     type: object
@@ -277,8 +273,6 @@ definitions:
       saveMedia:
         type: boolean
       syncFullHistory:
-        type: boolean
-      syncRecentHistory:
         type: boolean
       webhook:
         $ref: '#/definitions/models.InstanceWebhook'
@@ -471,8 +465,6 @@ definitions:
       saveMedia:
         type: boolean
       syncFullHistory:
-        type: boolean
-      syncRecentHistory:
         type: boolean
       webhook:
         $ref: '#/definitions/models.InstanceWebhook'
@@ -1296,8 +1288,6 @@ definitions:
     properties:
       base64:
         type: boolean
-      byEvents:
-        type: boolean
       enabled:
         type: boolean
       events:
@@ -1394,8 +1384,6 @@ definitions:
         type: boolean
       syncFullHistory:
         type: boolean
-      syncRecentHistory:
-        type: boolean
       webhook:
         $ref: '#/definitions/models.InstanceWebhook'
     type: object
@@ -1445,8 +1433,6 @@ definitions:
   models.InstanceWebhook:
     properties:
       base64:
-        type: boolean
-      byEvents:
         type: boolean
       enabled:
         type: boolean

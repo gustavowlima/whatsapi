@@ -74,9 +74,6 @@ func (s *RedisInstance) Update(ctx context.Context, id string, toUpdate *models.
 	if toUpdate.Webhook.Url != "" {
 		oldInstance.Webhook.Url = toUpdate.Webhook.Url
 	}
-	if toUpdate.Webhook.ByEvents != nil {
-		oldInstance.Webhook.ByEvents = toUpdate.Webhook.ByEvents
-	}
 	if toUpdate.Webhook.Base64 != nil {
 		oldInstance.Webhook.Base64 = toUpdate.Webhook.Base64
 	}

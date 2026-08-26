@@ -9,7 +9,6 @@ type Instance struct {
 	ReadMessages      bool            `json:"readMessages,omitempty"`
 	ReadStatus        bool            `json:"readStatus,omitempty"`
 	SyncFullHistory   bool            `json:"syncFullHistory,omitempty"`
-	SyncRecentHistory bool            `json:"syncRecentHistory,omitempty"`
 	SaveMedia         *bool           `json:"saveMedia,omitempty"`
 	RemoteJID         string          `json:"remoteJID,omitempty"`
 	Webhook           InstanceWebhook `json:"webhook,omitempty"`
@@ -25,10 +24,9 @@ type InstanceProxy struct {
 }
 
 type InstanceWebhook struct {
-	Enabled  *bool             `json:"enabled,omitempty"`
-	Url      string            `json:"url,omitempty"`
-	ByEvents *bool             `json:"byEvents,omitempty"`
-	Base64   *bool             `json:"base64,omitempty"`
-	Headers  map[string]string `json:"headers,omitempty"`
-	Events   []string          `json:"events,omitempty"`
+	Enabled *bool             `json:"enabled,omitempty"`
+	Url     string            `json:"url,omitempty"`
+	Base64  *bool             `json:"base64,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Events  []string          `json:"events,omitempty"`
 }
