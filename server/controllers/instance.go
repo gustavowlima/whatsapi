@@ -151,6 +151,9 @@ func (s *Instance) Update(ctx echo.Context) error {
 	if request.SaveMedia != nil {
 		toUpdate.SaveMedia = request.SaveMedia
 	}
+	if request.RejectCall != nil {
+		toUpdate.RejectCall = request.RejectCall
+	}
 
 	instance, err := s.repo.Update(c, request.ID, toUpdate)
 	if err != nil {

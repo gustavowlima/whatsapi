@@ -1336,6 +1336,8 @@ definitions:
         type: string
       proxyUsername:
         type: string
+      rejectCall:
+        type: boolean
       saveMedia:
         type: boolean
       webhook:
