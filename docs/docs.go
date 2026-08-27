@@ -9352,6 +9352,9 @@ const docTemplate = `{
                 "proxyUsername": {
                     "type": "string"
                 },
+                "readMessages": {
+                    "type": "boolean"
+                },
                 "saveMedia": {
                     "type": "boolean"
                 },
