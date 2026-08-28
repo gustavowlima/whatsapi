@@ -307,6 +307,20 @@ definitions:
       senderTimestamp:
         type: string
     type: object
+  dto.FetchProfilePictureRequest:
+    properties:
+      number:
+        type: string
+    required:
+    - number
+    type: object
+  dto.FetchProfilePictureResponse:
+    properties:
+      profilePictureUrl:
+        type: string
+      wuid:
+        type: string
+    type: object
   dto.FindWebhookResponse:
     properties:
       webhook:
@@ -1749,6 +1763,54 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Delete message for everyone
+      tags:
+      - Chat
+  /v1/chat/fetchProfilePictureUrl/{instance}:
+    post:
+      consumes:
+      - application/json
+      description: Returns the full-size profile picture URL for a number or group
+        JID, mirroring Evolution API's POST /chat/fetchProfilePictureUrl. profilePictureUrl
+        is null when the target has no picture or hid it.
+      operationId: postV1ChatFetchProfilePictureUrlByInstance
+      parameters:
+      - description: Instance ID
+        in: path
+        name: instance
+        required: true
+        type: string
+      - description: Number or JID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FetchProfilePictureRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.FetchProfilePictureResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.AuthenticationErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.HTTPErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Fetch profile picture URL
       tags:
       - Chat
   /v1/chat/markMessageAsRead/{instance}:

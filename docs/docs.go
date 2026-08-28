@@ -212,6 +212,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/chat/fetchProfilePictureUrl/{instance}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns the full-size profile picture URL for a number or group JID, mirroring Evolution API's POST /chat/fetchProfilePictureUrl. profilePictureUrl is null when the target has no picture or hid it.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Fetch profile picture URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "instance",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Number or JID",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FetchProfilePictureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.FetchProfilePictureResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/chat/markMessageAsRead/{instance}": {
             "post": {
                 "security": [
@@ -7824,6 +7888,28 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "senderTimestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.FetchProfilePictureRequest": {
+            "type": "object",
+            "required": [
+                "number"
+            ],
+            "properties": {
+                "number": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.FetchProfilePictureResponse": {
+            "type": "object",
+            "properties": {
+                "profilePictureUrl": {
+                    "type": "string"
+                },
+                "wuid": {
                     "type": "string"
                 }
             }
