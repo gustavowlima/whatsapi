@@ -74,3 +74,15 @@ type UpdateMessageResponse struct {
 	MessageTimestamp int                     `json:"messageTimestamp"`
 	InstanceId       string                  `json:"instanceId"`
 }
+
+// FetchProfilePictureRequest mirrors Evolution API's POST /chat/fetchProfilePictureUrl
+// payload: the number or JID (user or group) whose profile picture URL is requested.
+type FetchProfilePictureRequest struct {
+	InstanceID string `param:"instance" validate:"required" swaggerignore:"true"`
+	Number     string `json:"number" validate:"required"`
+}
+
+type FetchProfilePictureResponse struct {
+	Wuid              string  `json:"wuid"`
+	ProfilePictureUrl *string `json:"profilePictureUrl"`
+}

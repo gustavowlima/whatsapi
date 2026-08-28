@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -12,7 +14,12 @@ import (
 	"github.com/verbeux-ai/whatsmiau/utils"
 	"go.mau.fi/whatsmeow/types"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 )
+
+// fetchPictureSingleFlight is package-level because both Chat and ChatEVO
+// instantiate their own Chat controller; the deduplication must be shared.
+var fetchPictureSingleFlight singleflight.Group
 
 type Chat struct {
 	repo      interfaces.InstanceRepository
@@ -307,4 +314,74 @@ func (s *Chat) UpdateMessage(ctx echo.Context) error {
 		MessageTimestamp: int(res.CreatedAt.Unix()),
 		InstanceId:       request.InstanceID,
 	})
+}
+
+// FetchProfilePicture godoc
+// @Summary      Fetch profile picture URL
+// @Description  Returns the full-size profile picture URL for a number or group JID, mirroring Evolution API's POST /chat/fetchProfilePictureUrl. profilePictureUrl is null when the target has no picture or hid it.
+// @Tags         Chat
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        instance  path      string                            true  "Instance ID"
+// @Param        body      body      dto.FetchProfilePictureRequest     true  "Number or JID"
+// @Success      200       {object}  dto.FetchProfilePictureResponse
+// @Failure      400       {object}  utils.HTTPErrorResponse
+// @Failure      422       {object}  utils.HTTPErrorResponse
+// @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/chat/fetchProfilePictureUrl/{instance} [post]
+func (s *Chat) FetchProfilePicture(ctx echo.Context) error {
+	var request dto.FetchProfilePictureRequest
+	if err := ctx.Bind(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusUnprocessableEntity, err, "failed to bind request body")
+	}
+
+	if err := validator.New().Struct(&request); err != nil {
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid request body")
+	}
+
+	number := request.Number
+	if !strings.Contains(number, "@") && len(number) >= 18 {
+		// A bare id that long cannot be a phone number (E.164 maxes at 15
+		// digits); it is a group id, mirroring Evolution's createJid.
+		number += "@" + types.GroupServer
+	}
+
+	jid, err := numberToJid(number)
+	if err != nil {
+		zap.L().Error("error converting number to jid", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusBadRequest, err, "invalid number format")
+	}
+
+	// Reject JIDs whose server is not a known WhatsApp one before any
+	// network round-trip happens (ParseJID accepts arbitrary servers).
+	switch jid.Server {
+	case types.DefaultUserServer, types.GroupServer, types.HiddenUserServer, types.BroadcastServer:
+	default:
+		return utils.HTTPFail(ctx, http.StatusBadRequest, nil, "invalid jid server")
+	}
+
+	// Singleflight with a detached context: the shared whatsmeow call must not
+	// be canceled because one waiting request was aborted. In-process only —
+	// no cache, mirroring Evolution's per-request fetch.
+	sfCtx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+
+	url, err, _ := fetchPictureSingleFlight.Do(request.InstanceID+":"+jid.String(), func() (interface{}, error) {
+		return s.whatsmiau.FetchProfilePictureURL(sfCtx, request.InstanceID, *jid)
+	})
+	if err != nil {
+		zap.L().Error("Whatsmiau.FetchProfilePictureURL failed", zap.Error(err))
+		return utils.HTTPFail(ctx, http.StatusInternalServerError, err, "failed to fetch profile picture")
+	}
+
+	return ctx.JSON(http.StatusOK, buildProfilePictureResponse(jid, url.(string)))
+}
+
+func buildProfilePictureResponse(jid *types.JID, url string) dto.FetchProfilePictureResponse {
+	resp := dto.FetchProfilePictureResponse{Wuid: jid.String()}
+	if url != "" {
+		resp.ProfilePictureUrl = &url
+	}
+	return resp
 }
