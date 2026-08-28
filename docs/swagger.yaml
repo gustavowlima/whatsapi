@@ -1338,6 +1338,8 @@ definitions:
         type: string
       readMessages:
         type: boolean
+      rejectCall:
+        type: boolean
       saveMedia:
         type: boolean
       webhook:

@@ -9353,6 +9353,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "readMessages": {
+                  "type": "boolean"
+                },
+                "rejectCall": {
                     "type": "boolean"
                 },
                 "saveMedia": {

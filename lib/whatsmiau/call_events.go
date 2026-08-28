@@ -1,6 +1,7 @@
 package whatsmiau
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,6 +20,14 @@ func (s *Whatsmiau) handleCallOfferEvent(id string, instance *models.Instance, e
 	data.RemotePlatform = event.RemotePlatform
 	data.RemoteVersion = event.RemoteVersion
 	s.emitCallEvent(id, instance, data, event.Timestamp, eventMap)
+
+	if instance.RejectCall != nil && *instance.RejectCall {
+		if client, ok := s.clients.Load(id); ok {
+			if err := client.RejectCall(context.Background(), event.From, event.CallID); err != nil {
+				zap.L().Error("failed to reject call", zap.String("instance", id), zap.Error(err))
+			}
+		}
+	}
 }
 
 func (s *Whatsmiau) handleCallOfferNoticeEvent(id string, instance *models.Instance, event *events.CallOfferNotice, eventMap map[webhookConfigEvent]bool) {
