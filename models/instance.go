@@ -7,7 +7,6 @@ type Instance struct {
 	GroupsIgnore      *bool           `json:"groupsIgnore,omitempty"`
 	AlwaysOnline      bool            `json:"alwaysOnline,omitempty"`
 	ReadMessages      *bool           `json:"readMessages,omitempty"`
-	ReadStatus        bool            `json:"readStatus,omitempty"`
 	SyncFullHistory   bool            `json:"syncFullHistory,omitempty"`
 	SaveMedia         *bool           `json:"saveMedia,omitempty"`
 	RemoteJID         string          `json:"remoteJID,omitempty"`
