@@ -44,6 +44,7 @@ type UpdateInstanceRequest struct {
 	ID           string `json:"id,omitempty" param:"id" validate:"required" swaggerignore:"true"`
 	GroupsIgnore *bool  `json:"groupsIgnore,omitempty"`
 	SaveMedia    *bool  `json:"saveMedia,omitempty"`
+	ReadMessages *bool  `json:"readMessages,omitempty"`
 	RejectCall   *bool  `json:"rejectCall,omitempty"`
 	Webhook      struct {
 		Enabled *bool    `json:"enabled,omitempty"`

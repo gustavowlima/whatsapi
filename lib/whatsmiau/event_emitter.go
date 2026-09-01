@@ -298,6 +298,14 @@ func (s *Whatsmiau) handleMessageEvent(id string, instance *models.Instance, e *
 		}
 	}
 
+	if instance.ReadMessages != nil && *instance.ReadMessages && !e.Info.IsFromMe {
+		if client, ok := s.clients.Load(id); ok {
+			if err := client.MarkRead(context.Background(), []types.MessageID{e.Info.ID}, e.Info.Timestamp, e.Info.Chat, e.Info.Sender); err != nil {
+				zap.L().Error("failed to mark message as read", zap.String("instance", id), zap.Error(err))
+			}
+		}
+	}
+
 	if !eventMap[webhookConfigMessagesUpsert] {
 		return
 	}

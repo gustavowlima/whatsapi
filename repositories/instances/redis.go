@@ -97,6 +97,10 @@ func (s *RedisInstance) Update(ctx context.Context, id string, toUpdate *models.
 		oldInstance.SaveMedia = toUpdate.SaveMedia
 	}
 
+	if toUpdate.ReadMessages != nil {
+		oldInstance.ReadMessages = toUpdate.ReadMessages
+  }
+  
 	if toUpdate.RejectCall != nil {
 		oldInstance.RejectCall = toUpdate.RejectCall
 	}

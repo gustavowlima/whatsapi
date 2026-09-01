@@ -151,6 +151,9 @@ func (s *Instance) Update(ctx echo.Context) error {
 	if request.SaveMedia != nil {
 		toUpdate.SaveMedia = request.SaveMedia
 	}
+	if request.ReadMessages != nil {
+		toUpdate.ReadMessages = request.ReadMessages
+  }
 	if request.RejectCall != nil {
 		toUpdate.RejectCall = request.RejectCall
 	}

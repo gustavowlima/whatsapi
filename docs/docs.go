@@ -9438,6 +9438,9 @@ const docTemplate = `{
                 "proxyUsername": {
                     "type": "string"
                 },
+                "readMessages": {
+                  "type": "boolean"
+                },
                 "rejectCall": {
                     "type": "boolean"
                 },
