@@ -7637,9 +7637,6 @@ const docTemplate = `{
                 "readMessages": {
                     "type": "boolean"
                 },
-                "readStatus": {
-                    "type": "boolean"
-                },
                 "rejectCall": {
                     "type": "boolean"
                 },
@@ -7770,9 +7767,6 @@ const docTemplate = `{
                 "readMessages": {
                     "type": "boolean"
                 },
-                "readStatus": {
-                    "type": "boolean"
-                },
                 "rejectCall": {
                     "type": "boolean"
                 },
@@ -7824,9 +7818,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "readMessages": {
-                    "type": "boolean"
-                },
-                "readStatus": {
                     "type": "boolean"
                 },
                 "rejectCall": {
@@ -8128,9 +8119,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "readMessages": {
-                    "type": "boolean"
-                },
-                "readStatus": {
                     "type": "boolean"
                 },
                 "rejectCall": {
@@ -9500,9 +9488,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "readMessages": {
-                    "type": "boolean"
-                },
-                "readStatus": {
                     "type": "boolean"
                 },
                 "rejectCall": {

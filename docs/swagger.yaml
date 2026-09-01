@@ -137,8 +137,6 @@ definitions:
         type: string
       readMessages:
         type: boolean
-      readStatus:
-        type: boolean
       rejectCall:
         type: boolean
       remoteJID:
@@ -227,8 +225,6 @@ definitions:
         type: string
       readMessages:
         type: boolean
-      readStatus:
-        type: boolean
       rejectCall:
         type: boolean
       remoteJID:
@@ -263,8 +259,6 @@ definitions:
       proxyUsername:
         type: string
       readMessages:
-        type: boolean
-      readStatus:
         type: boolean
       rejectCall:
         type: boolean
@@ -469,8 +463,6 @@ definitions:
       proxyUsername:
         type: string
       readMessages:
-        type: boolean
-      readStatus:
         type: boolean
       rejectCall:
         type: boolean
@@ -1391,8 +1383,6 @@ definitions:
       proxyUsername:
         type: string
       readMessages:
-        type: boolean
-      readStatus:
         type: boolean
       rejectCall:
         type: boolean

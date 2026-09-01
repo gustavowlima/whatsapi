@@ -203,9 +203,6 @@
                 "readMessages": {
                     "type": "boolean"
                 },
-                "readStatus": {
-                    "type": "boolean"
-                },
                 "rejectCall": {
                     "type": "boolean"
                 },
@@ -336,9 +333,6 @@
                 "readMessages": {
                     "type": "boolean"
                 },
-                "readStatus": {
-                    "type": "boolean"
-                },
                 "rejectCall": {
                     "type": "boolean"
                 },
@@ -390,9 +384,6 @@
                     "type": "string"
                 },
                 "readMessages": {
-                    "type": "boolean"
-                },
-                "readStatus": {
                     "type": "boolean"
                 },
                 "rejectCall": {
@@ -694,9 +685,6 @@
                     "type": "string"
                 },
                 "readMessages": {
-                    "type": "boolean"
-                },
-                "readStatus": {
                     "type": "boolean"
                 },
                 "rejectCall": {
@@ -2066,9 +2054,6 @@
                     "type": "string"
                 },
                 "readMessages": {
-                    "type": "boolean"
-                },
-                "readStatus": {
                     "type": "boolean"
                 },
                 "rejectCall": {
