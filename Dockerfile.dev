@@ -1,0 +1,15 @@
+FROM cosmtrek/air:latest AS air-bin
+
+FROM golang:1.25-alpine
+
+WORKDIR /app
+
+# Install build dependencies for CGO/SQLite, ffmpeg, mailcap, git
+RUN apk update && apk add --no-cache build-base sqlite-dev gcc musl-dev ffmpeg mailcap git
+
+# Copy pre-compiled air binary directly (instant)
+COPY --from=air-bin /go/bin/air /usr/local/bin/air
+
+EXPOSE 8080 8081
+
+CMD ["air", "-c", ".air.toml"]
