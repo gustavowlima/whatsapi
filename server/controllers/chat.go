@@ -329,6 +329,7 @@ func (s *Chat) UpdateMessage(ctx echo.Context) error {
 // @Failure      400       {object}  utils.HTTPErrorResponse
 // @Failure      422       {object}  utils.HTTPErrorResponse
 // @Failure      500       {object}  utils.HTTPErrorResponse
+// @Router       /v1/instance/{instance}/chat/fetchProfilePictureUrl [post]
 // @Router       /v1/chat/fetchProfilePictureUrl/{instance} [post]
 func (s *Chat) FetchProfilePicture(ctx echo.Context) error {
 	var request dto.FetchProfilePictureRequest
