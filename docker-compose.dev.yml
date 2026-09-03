@@ -20,7 +20,7 @@ services:
       REDIS_TLS: "false"
       API_KEY: ${API_KEY:-default}
       DIALECT_DB: sqlite3
-      DB_URL: "file:/app/data/data.db?_foreign_keys=on"
+      DB_URL: "file:///app/data/data.db?_foreign_keys=on"
       GCS_ENABLED: "false"
       GCL_ENABLED: "false"
       EMITTER_BUFFER_SIZE: 2048
